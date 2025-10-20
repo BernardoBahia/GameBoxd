@@ -23,6 +23,16 @@ export class UserService {
     });
   }
 
+  async updateUser(
+    id: string,
+    data: { email?: string; name?: string; password?: string }
+  ) {
+    return prisma.user.update({
+      where: { id },
+      data,
+    });
+  }
+
   async deleteUser(id: string) {
     return prisma.user.delete({
       where: { id },
