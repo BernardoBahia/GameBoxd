@@ -1,4 +1,4 @@
-import { UserService } from "./user.service";
+import { UserService } from "../services/user.service";
 import { Request, Response } from "express";
 
 export const UserController = {
