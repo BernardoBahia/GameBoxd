@@ -7,11 +7,7 @@ const router = Router();
 // Rotas existentes
 router.post("/users", UserController.createUser);
 router.get("/users", UserController.getAllUsers);
-router.get("/users/:id", UserController.getUserById);
-router.put("/users/:id", UserController.updateUser);
-router.delete("/users/:id", UserController.deleteUser);
 
-// Nova rota protegida para testar o token
 router.get(
   "/users/profile",
   authMiddleware,
@@ -22,5 +18,11 @@ router.get(
     });
   }
 );
+
+router.get("/users/:id", UserController.getUserById);
+router.put("/users/:id", UserController.updateUser);
+router.delete("/users/:id", UserController.deleteUser);
+
+// Nova rota protegida para testar o token
 
 export default router;

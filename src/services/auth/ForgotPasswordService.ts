@@ -1,11 +1,12 @@
 import crypto from "crypto";
 import { UserService } from "../user.service";
-import { AuthService } from "./AuthService";
 
 const userService = new UserService();
-const authService = new AuthService();
 
 export class ForgotPasswordService {
+  private resetTokens: Map<string, { userId: string; expiresAt: Date }> =
+    new Map();
+
   async requestPasswordReset(email: string) {
     const user = await userService.getUserByEmail(email);
 
@@ -14,19 +15,37 @@ export class ForgotPasswordService {
     }
 
     const resetToken = crypto.randomBytes(32).toString("hex");
-    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hora
+    const resetTokenExpiry = new Date(Date.now() + 3600000);
+
+    this.resetTokens.set(resetToken, {
+      userId: user.id,
+      expiresAt: resetTokenExpiry,
+    });
 
     return {
       message: "Token de reset enviado",
-      resetToken, // Remover em produção
+      resetToken,
       expiresAt: resetTokenExpiry,
     };
   }
 
   async resetPassword(resetToken: string, newPassword: string) {
-    if (!resetToken) {
-      throw new Error("Token inválido");
+    const tokenData = this.resetTokens.get(resetToken);
+
+    if (!tokenData) {
+      throw new Error("Token inválido ou expirado");
     }
+
+    if (new Date() > tokenData.expiresAt) {
+      this.resetTokens.delete(resetToken);
+      throw new Error("Token expirado");
+    }
+
+    await userService.updateUser(tokenData.userId, {
+      password: newPassword,
+    });
+
+    this.resetTokens.delete(resetToken);
 
     return {
       message: "Senha alterada com sucesso",
