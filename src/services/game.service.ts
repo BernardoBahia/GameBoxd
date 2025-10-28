@@ -66,7 +66,7 @@ export class GameService {
   };
 
   searchGamesByGenre = async (
-    genreId: string,
+    genreId: number,
     page: number = 1,
     pageSize: number = 10
   ) => {
@@ -105,7 +105,7 @@ export class GameService {
     }
   };
 
-  getGameDetails = async (gameId: string) => {
+  getGameDetails = async (gameId: number) => {
     const response = await rawgApi.get(`/games/${gameId}`);
     return response.data;
   };
