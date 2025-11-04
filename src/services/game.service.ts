@@ -1,4 +1,10 @@
 import axios from "axios";
+import {
+  RawgGame,
+  RawgListResponse,
+  GameSummary,
+  GameDetails,
+} from "../models/game.model";
 
 const RawgAPIKey = process.env.RAWG_API_KEY;
 
@@ -7,24 +13,8 @@ const rawgApi = axios.create({
   params: { key: RawgAPIKey },
 });
 
-interface RawgGame {
-  id: number;
-  name: string;
-  released: string;
-  background_image: string;
-  genres?: { name: string }[];
-  developers?: { name: string }[];
-  publishers?: { name: string }[];
-  platforms?: { platform: { name: string } }[];
-  additions?: { id: number; name: string; released: string }[];
-}
-
-interface RawgListResponse {
-  results: RawgGame[];
-}
-
 export class GameService {
-  private formatGameData(game: RawgGame) {
+  private formatGameData(game: RawgGame): GameDetails {
     return {
       id: game.id,
       name: game.name,
@@ -48,24 +38,30 @@ export class GameService {
     throw new Error(message);
   }
 
-  getGames = async (page = 1, pageSize = 10) => {
+  getGames = async (page = 1, pageSize = 10): Promise<GameSummary[]> => {
     try {
       const response = await rawgApi.get<RawgListResponse>("/games", {
         params: { page, page_size: pageSize },
       });
 
-      return response.data.results.map((game) => ({
-        id: game.id,
-        name: game.name,
-        released: game.released,
-        background_image: game.background_image,
-      }));
+      return response.data.results.map(
+        (game): GameSummary => ({
+          id: game.id,
+          name: game.name,
+          released: game.released,
+          background_image: game.background_image,
+        })
+      );
     } catch (error) {
       this.handleError("Erro ao obter jogos", error);
     }
   };
 
-  searchGames = async (query: string, page = 1, pageSize = 10) => {
+  searchGames = async (
+    query: string,
+    page = 1,
+    pageSize = 10
+  ): Promise<GameDetails[]> => {
     try {
       const response = await rawgApi.get<RawgListResponse>("/games", {
         params: { search: query, page, page_size: pageSize },
@@ -94,7 +90,7 @@ export class GameService {
     platformId: number,
     page = 1,
     pageSize = 10
-  ) => {
+  ): Promise<GameDetails[]> => {
     try {
       const response = await rawgApi.get<RawgListResponse>("/games", {
         params: { platforms: platformId, page, page_size: pageSize },
@@ -119,7 +115,11 @@ export class GameService {
     }
   };
 
-  searchGamesByGenre = async (genreId: number, page = 1, pageSize = 10) => {
+  searchGamesByGenre = async (
+    genreId: number,
+    page = 1,
+    pageSize = 10
+  ): Promise<GameDetails[]> => {
     try {
       const response = await rawgApi.get<RawgListResponse>("/games", {
         params: { genres: genreId, page, page_size: pageSize },
@@ -144,7 +144,11 @@ export class GameService {
     }
   };
 
-  searchGamesByDlc = async (dlcId: number, page = 1, pageSize = 10) => {
+  searchGamesByDlc = async (
+    dlcId: number,
+    page = 1,
+    pageSize = 10
+  ): Promise<GameDetails[]> => {
     try {
       const dlcResp = await rawgApi.get<RawgListResponse>(
         `/games/${dlcId}/additions`,
@@ -172,7 +176,7 @@ export class GameService {
     }
   };
 
-  getGameDetails = async (gameId: number) => {
+  getGameDetails = async (gameId: number): Promise<GameDetails> => {
     try {
       const detailsResp = await rawgApi.get<RawgGame>(`/games/${gameId}`);
       const dlcsResp = await rawgApi.get<RawgListResponse>(

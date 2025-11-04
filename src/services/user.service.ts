@@ -5,7 +5,7 @@ import { User } from "../models/user.model";
 const prisma = new PrismaClient();
 
 export class UserService {
-  private toUserModel(prismaUser: PrismaUser): User {
+  private toUserRepositorie(prismaUser: PrismaUser): User {
     return {
       id: prismaUser.id,
       email: prismaUser.email,
@@ -32,7 +32,7 @@ export class UserService {
         },
       });
 
-      return this.toUserModel(createdUser);
+      return this.toUserRepositorie(createdUser);
     } catch (error) {
       console.error("Erro ao criar usuário:", error);
       throw new Error("Falha ao criar usuário");
@@ -45,7 +45,7 @@ export class UserService {
         where: { email },
       });
 
-      return user ? this.toUserModel(user) : null;
+      return user ? this.toUserRepositorie(user) : null;
     } catch (error) {
       console.error("Erro ao buscar usuário por e-mail:", error);
       throw new Error("Falha ao buscar usuário por e-mail");
@@ -64,7 +64,7 @@ export class UserService {
   async getAllUsers(): Promise<User[]> {
     try {
       const users = await prisma.user.findMany();
-      return users.map((user) => this.toUserModel(user));
+      return users.map((user) => this.toUserRepositorie(user));
     } catch (error) {
       console.error("Erro ao listar usuários:", error);
       throw new Error("Falha ao listar usuários");
@@ -77,7 +77,7 @@ export class UserService {
         where: { id },
       });
 
-      return user ? this.toUserModel(user) : null;
+      return user ? this.toUserRepositorie(user) : null;
     } catch (error) {
       console.error("Erro ao buscar usuário por ID:", error);
       throw new Error("Falha ao buscar usuário por ID");
@@ -98,7 +98,7 @@ export class UserService {
         data,
       });
 
-      return this.toUserModel(updatedUser);
+      return this.toUserRepositorie(updatedUser);
     } catch (error) {
       console.error("Erro ao atualizar usuário:", error);
       throw new Error("Falha ao atualizar usuário");
@@ -111,7 +111,7 @@ export class UserService {
         where: { id },
       });
 
-      return this.toUserModel(deletedUser);
+      return this.toUserRepositorie(deletedUser);
     } catch (error) {
       console.error("Erro ao deletar usuário:", error);
       throw new Error("Falha ao deletar usuário");
