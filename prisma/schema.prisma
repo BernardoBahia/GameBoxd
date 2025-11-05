@@ -8,32 +8,47 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  reviews   Review[]
-  lists     List[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime? @updatedAt
+  id         String      @id @default(uuid())
+  name       String
+  email      String      @unique
+  password   String
+  reviews    Review[]
+  lists      List[]
+  likedGames UserLikedGame[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime?   @updatedAt
 }
 
 model Game {
-  id        String   @id @default(uuid())
-  gameId    String   @unique
-  reviews   Review[]
-  list List[]
+  id         String          @id @default(uuid())
+  gameId     String          @unique
+  isLiked    Boolean         @default(false)
+  reviews    Review[]
+  listGames  ListGame[]
+  likedByUsers UserLikedGame[]
 }
 
 model List {
-  id        String   @id @default(uuid())
+  id        String     @id @default(uuid())
   name      String
-  gameId    String
   userId    String
+  isPublic  Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime?  @updatedAt
+  user      User       @relation(fields: [userId], references: [id])
+  listGames ListGame[]
+}
+
+model ListGame {
+  id        String   @id @default(uuid())
+  listId    String
+  gameId    String
+  isPublic  Boolean  @default(false)
   createdAt DateTime @default(now())
-  updatedAt DateTime? @updatedAt
-  user      User   @relation(fields: [userId], references: [id])
-  game      Game   @relation(fields: [gameId], references: [id])
+  list      List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([listId, gameId])
 }
 
 model Review {
@@ -46,4 +61,15 @@ model Review {
   updatedAt DateTime? @updatedAt
   user      User   @relation(fields: [userId], references: [id])
   game      Game   @relation(fields: [gameId], references: [id])
+}
+
+model UserLikedGame {
+  id        String   @id @default(uuid())
+  userId    String
+  gameId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameId])
 }

@@ -5,8 +5,10 @@ import {
   GameSummary,
   GameDetails,
 } from "../models/game.model";
+import { PrismaClient } from "@prisma/client";
 
 const RawgAPIKey = process.env.RAWG_API_KEY;
+const prisma = new PrismaClient();
 
 const rawgApi = axios.create({
   baseURL: "https://api.rawg.io/api",
@@ -188,6 +190,72 @@ export class GameService {
       });
     } catch (error) {
       this.handleError("Erro ao buscar detalhes do jogo", error);
+    }
+  };
+
+  likeGame = async (
+    userId: string,
+    gameId: string
+  ): Promise<{ message: string; liked: boolean }> => {
+    try {
+      // Verifica se o jogo já existe no banco
+      let game = await prisma.game.findUnique({
+        where: { gameId },
+      });
+
+      // Se não existir, cria o jogo
+      if (!game) {
+        game = await prisma.game.create({
+          data: {
+            gameId,
+            isLiked: false,
+          },
+        });
+      }
+
+      // Verifica se o usuário já curtiu o jogo
+      const existingLike = await prisma.userLikedGame.findUnique({
+        where: {
+          userId_gameId: {
+            userId,
+            gameId: game.id,
+          },
+        },
+      });
+
+      if (existingLike) {
+        // Se já curtiu, remove a curtida
+        await prisma.userLikedGame.delete({
+          where: {
+            id: existingLike.id,
+          },
+        });
+        return { message: "Curtida removida com sucesso", liked: false };
+      } else {
+        // Se não curtiu, adiciona a curtida
+        await prisma.userLikedGame.create({
+          data: {
+            userId,
+            gameId: game.id,
+          },
+        });
+        return { message: "Jogo curtido com sucesso", liked: true };
+      }
+    } catch (error) {
+      this.handleError("Erro ao curtir jogo", error);
+    }
+  };
+
+  getUserLikedGames = async (userId: string): Promise<string[]> => {
+    try {
+      const likedGames = await prisma.userLikedGame.findMany({
+        where: { userId },
+        include: { game: true },
+      });
+
+      return likedGames.map((like) => like.game.gameId);
+    } catch (error) {
+      this.handleError("Erro ao buscar jogos curtidos", error);
     }
   };
 }
