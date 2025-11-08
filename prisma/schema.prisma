@@ -8,24 +8,26 @@ datasource db {
 }
 
 model User {
-  id         String      @id @default(uuid())
+  id         String            @id @default(uuid())
   name       String
-  email      String      @unique
+  email      String            @unique
   password   String
   reviews    Review[]
   lists      List[]
   likedGames UserLikedGame[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime?   @updatedAt
+  gameStatus UserGameStatus[]
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime?         @updatedAt
 }
 
 model Game {
-  id         String          @id @default(uuid())
-  gameId     String          @unique
-  isLiked    Boolean         @default(false)
-  reviews    Review[]
-  listGames  ListGame[]
+  id           String            @id @default(uuid())
+  gameId       String            @unique
+  isLiked      Boolean           @default(false)
+  reviews      Review[]
+  listGames    ListGame[]
   likedByUsers UserLikedGame[]
+  userStatus   UserGameStatus[]
 }
 
 model List {
@@ -70,6 +72,25 @@ model UserLikedGame {
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameId])
+}
+
+enum GameStatusType {
+  PLAYING
+  COMPLETED
+  WANT_TO_PLAY
+}
+
+model UserGameStatus {
+  id        String         @id @default(uuid())
+  userId    String
+  gameId    String
+  status    GameStatusType
+  createdAt DateTime       @default(now())
+  updatedAt DateTime?      @updatedAt
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game      Game           @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@unique([userId, gameId])
 }

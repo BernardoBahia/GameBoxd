@@ -198,12 +198,10 @@ export class GameService {
     gameId: string
   ): Promise<{ message: string; liked: boolean }> => {
     try {
-      // Verifica se o jogo já existe no banco
       let game = await prisma.game.findUnique({
         where: { gameId },
       });
 
-      // Se não existir, cria o jogo
       if (!game) {
         game = await prisma.game.create({
           data: {
@@ -213,7 +211,6 @@ export class GameService {
         });
       }
 
-      // Verifica se o usuário já curtiu o jogo
       const existingLike = await prisma.userLikedGame.findUnique({
         where: {
           userId_gameId: {
@@ -224,7 +221,6 @@ export class GameService {
       });
 
       if (existingLike) {
-        // Se já curtiu, remove a curtida
         await prisma.userLikedGame.delete({
           where: {
             id: existingLike.id,
@@ -232,7 +228,6 @@ export class GameService {
         });
         return { message: "Curtida removida com sucesso", liked: false };
       } else {
-        // Se não curtiu, adiciona a curtida
         await prisma.userLikedGame.create({
           data: {
             userId,
@@ -256,6 +251,111 @@ export class GameService {
       return likedGames.map((like) => like.game.gameId);
     } catch (error) {
       this.handleError("Erro ao buscar jogos curtidos", error);
+    }
+  };
+
+  setGameStatus = async (
+    userId: string,
+    gameId: string,
+    status: "PLAYING" | "COMPLETED" | "WANT_TO_PLAY"
+  ): Promise<{ message: string; status: string }> => {
+    try {
+      // Verifica se o jogo já existe no banco
+      let game = await prisma.game.findUnique({
+        where: { gameId },
+      });
+
+      if (!game) {
+        game = await prisma.game.create({
+          data: {
+            gameId,
+          },
+        });
+      }
+
+      const existingStatus = await prisma.userGameStatus.findUnique({
+        where: {
+          userId_gameId: {
+            userId,
+            gameId: game.id,
+          },
+        },
+      });
+
+      if (existingStatus) {
+        await prisma.userGameStatus.update({
+          where: {
+            id: existingStatus.id,
+          },
+          data: {
+            status,
+          },
+        });
+        return { message: "Status do jogo atualizado com sucesso", status };
+      } else {
+        // Cria novo status
+        await prisma.userGameStatus.create({
+          data: {
+            userId,
+            gameId: game.id,
+            status,
+          },
+        });
+        return { message: "Status do jogo definido com sucesso", status };
+      }
+    } catch (error) {
+      this.handleError("Erro ao definir status do jogo", error);
+    }
+  };
+
+  removeGameStatus = async (
+    userId: string,
+    gameId: string
+  ): Promise<{ message: string }> => {
+    try {
+      const game = await prisma.game.findUnique({
+        where: { gameId },
+      });
+
+      if (!game) {
+        throw new Error("Jogo não encontrado");
+      }
+
+      await prisma.userGameStatus.deleteMany({
+        where: {
+          userId,
+          gameId: game.id,
+        },
+      });
+
+      return { message: "Status do jogo removido com sucesso" };
+    } catch (error) {
+      this.handleError("Erro ao remover status do jogo", error);
+    }
+  };
+
+  getUserGamesByStatus = async (
+    userId: string,
+    status?: "PLAYING" | "COMPLETED" | "WANT_TO_PLAY"
+  ): Promise<
+    Array<{ gameId: string; status: string; updatedAt: Date | null }>
+  > => {
+    try {
+      const where = status ? { userId, status } : { userId };
+
+      const games = await prisma.userGameStatus.findMany({
+        where,
+        include: { game: true },
+        orderBy: { updatedAt: "desc" },
+      });
+
+      return games.map((gameStatus) => ({
+        gameId: gameStatus.game.gameId,
+        status: gameStatus.status,
+        updatedAt: gameStatus.updatedAt,
+      }));
+    } catch (error) {
+      this.handleError("Erro ao buscar jogos por status", error);
     }
   };
 }

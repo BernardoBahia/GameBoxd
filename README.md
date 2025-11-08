@@ -6,8 +6,7 @@
 [x] RF06 Busca de jogos por nome, gênero ou plataforma.
 [x] RF07 Acesso a detalhes de um jogo.
 [] RF08 Avaliação de jogos com nota e comentário.
-[] RF09 Marcar jogos como jogado, jogando ou quero jogar.
-[] RF10 Criação de listas personalizadas de jogos.
-[] RF11 Seguir outros usuários.
-[] RF12 Curtir e comentar em reviews.
-[] RF13 Feed com atividades recentes de usuários
+[x] RF09 Marcar jogos como jogado, jogando ou quero jogar.
+[x] RF10 Criação de listas personalizadas de jogos.
+[] RF11 Curtir e comentar em reviews.
+[] RF12 Feed com atividades recentes de usuários

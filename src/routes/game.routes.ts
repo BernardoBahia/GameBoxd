@@ -11,5 +11,8 @@ router.get("/games/dlc/:dlcId", GameController.searchGamesByDlc);
 router.get("/games/details/:gameId", GameController.getGameDetails);
 router.post("/games/like", GameController.likeGame);
 router.get("/games/liked/:userId", GameController.getUserLikedGames);
+router.post("/games/status", GameController.setGameStatus);
+router.delete("/games/status", GameController.removeGameStatus);
+router.get("/games/status/:userId", GameController.getUserGamesByStatus);
 
 export default router;

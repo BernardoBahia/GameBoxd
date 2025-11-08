@@ -127,4 +127,76 @@ export const GameController = {
       res.status(500).json({ error: "Erro ao buscar jogos curtidos" });
     }
   },
+
+  setGameStatus: async (req: Request, res: Response) => {
+    try {
+      const { userId, gameId, status } = req.body;
+
+      if (!userId || !gameId || !status) {
+        return res
+          .status(400)
+          .json({ error: "userId, gameId e status são obrigatórios" });
+      }
+
+      if (!["PLAYING", "COMPLETED", "WANT_TO_PLAY"].includes(status)) {
+        return res.status(400).json({
+          error: "Status deve ser PLAYING, COMPLETED ou WANT_TO_PLAY",
+        });
+      }
+
+      const result = await gameService.setGameStatus(userId, gameId, status);
+      res.status(200).json(result);
+    } catch (error) {
+      console.error("Erro ao definir status do jogo:", error);
+      res.status(500).json({ error: "Erro ao definir status do jogo" });
+    }
+  },
+
+  removeGameStatus: async (req: Request, res: Response) => {
+    try {
+      const { userId, gameId } = req.body;
+
+      if (!userId || !gameId) {
+        return res
+          .status(400)
+          .json({ error: "userId e gameId são obrigatórios" });
+      }
+
+      const result = await gameService.removeGameStatus(userId, gameId);
+      res.status(200).json(result);
+    } catch (error) {
+      console.error("Erro ao remover status do jogo:", error);
+      res.status(500).json({ error: "Erro ao remover status do jogo" });
+    }
+  },
+
+  getUserGamesByStatus: async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.userId;
+      const status = req.query.status as
+        | "PLAYING"
+        | "COMPLETED"
+        | "WANT_TO_PLAY"
+        | undefined;
+
+      if (!userId) {
+        return res.status(400).json({ error: "userId é obrigatório" });
+      }
+
+      if (
+        status &&
+        !["PLAYING", "COMPLETED", "WANT_TO_PLAY"].includes(status)
+      ) {
+        return res.status(400).json({
+          error: "Status deve ser PLAYING, COMPLETED ou WANT_TO_PLAY",
+        });
+      }
+
+      const games = await gameService.getUserGamesByStatus(userId, status);
+      res.status(200).json(games);
+    } catch (error) {
+      console.error("Erro ao buscar jogos por status:", error);
+      res.status(500).json({ error: "Erro ao buscar jogos por status" });
+    }
+  },
 };
