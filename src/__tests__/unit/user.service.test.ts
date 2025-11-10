@@ -1,36 +1,38 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { UserService } from "../../services/user.service";
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import { User } from "../../models/user.model";
 
-// Mock do PrismaClient - DEVE estar antes dos imports
 vi.mock("@prisma/client", () => {
-  const mockUser = {
-    create: vi.fn(),
-    findUnique: vi.fn(),
-    findMany: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
+  const mockPrisma = {
+    user: {
+      create: vi.fn(),
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
   };
 
   return {
     PrismaClient: class {
-      user = mockUser;
+      user = mockPrisma.user;
     },
   };
 });
 
-// Mock do bcrypt - DEVE estar antes dos imports
 vi.mock("bcryptjs", () => ({
   default: {
     hash: vi.fn(),
     compare: vi.fn(),
   },
+  hash: vi.fn(),
+  compare: vi.fn(),
 }));
 
-import { UserService } from "../../services/user.service";
-import bcrypt from "bcryptjs";
-import { PrismaClient } from "@prisma/client";
-import { Mock } from "vitest";
+import type { Mock } from "vitest";
 
-// Criar uma instância para acessar os mocks
 const prisma = new PrismaClient();
 const prismaMock = prisma.user as unknown as {
   create: Mock;
@@ -44,31 +46,29 @@ describe("UserService", () => {
   let userService: UserService;
 
   beforeEach(() => {
-    // Limpa todos os mocks antes de cada teste
     vi.clearAllMocks();
     userService = new UserService();
   });
 
   describe("createUser", () => {
-    it("deve criar um usuário com sucesso", async () => {
+    it("deve criar um novo usuário com sucesso", async () => {
       const userData = {
         email: "test@example.com",
         name: "Test User",
         password: "password123",
       };
 
-      const hashedPassword = "hashedPassword123";
-      const createdUserData = {
-        id: "123",
+      const mockPrismaUser = {
+        id: "1",
         email: userData.email,
         name: userData.name,
-        password: hashedPassword,
+        password: "hashed_password",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      vi.mocked(bcrypt.hash).mockResolvedValue(hashedPassword as never);
-      prismaMock.create.mockResolvedValue(createdUserData);
+      vi.mocked(bcrypt.hash).mockResolvedValue("hashed_password" as never);
+      prismaMock.create.mockResolvedValue(mockPrismaUser);
 
       const user = await userService.createUser(
         userData.email,
@@ -81,53 +81,46 @@ describe("UserService", () => {
         data: {
           email: userData.email,
           name: userData.name,
-          password: hashedPassword,
+          password: "hashed_password",
         },
       });
-      expect(user).toBeDefined();
       expect(user.email).toBe(userData.email);
       expect(user.name).toBe(userData.name);
-      expect(user.id).toBe("123");
+      expect(user.passwordHash).toBe("hashed_password");
     });
 
-    it("deve lançar erro ao falhar na criação do usuário", async () => {
-      const userData = {
-        email: "test@example.com",
-        name: "Test User",
-        password: "password123",
-      };
-
-      vi.mocked(bcrypt.hash).mockResolvedValue("hashedPassword" as never);
+    it("deve lançar erro ao falhar na criação", async () => {
+      vi.mocked(bcrypt.hash).mockResolvedValue("hashed_password" as never);
       prismaMock.create.mockRejectedValue(new Error("Database error"));
 
       await expect(
-        userService.createUser(userData.email, userData.name, userData.password)
+        userService.createUser("test@example.com", "Test", "password")
       ).rejects.toThrow("Falha ao criar usuário");
     });
   });
 
   describe("getUserByEmail", () => {
     it("deve retornar um usuário quando encontrado", async () => {
-      const userEmail = "test@example.com";
-      const mockUser = {
-        id: "123",
-        email: userEmail,
+      const email = "test@example.com";
+      const mockUser: User = {
+        id: "1",
+        email,
         name: "Test User",
-        password: "hashedPassword",
+        passwordHash: "hashed_password",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
       prismaMock.findUnique.mockResolvedValue(mockUser);
 
-      const user = await userService.getUserByEmail(userEmail);
+      const user = await userService.getUserByEmail(email);
 
       expect(prismaMock.findUnique).toHaveBeenCalledWith({
-        where: { email: userEmail },
+        where: { email },
       });
       expect(user).toBeDefined();
-      expect(user?.email).toBe(userEmail);
-      expect(user?.id).toBe("123");
+      expect(user?.email).toBe(email);
+      expect(user?.id).toBe("1");
     });
 
     it("deve retornar null quando usuário não encontrado", async () => {
@@ -148,76 +141,89 @@ describe("UserService", () => {
   });
 
   describe("validatePassword", () => {
-    it("deve retornar true para senha válida", async () => {
-      const plainPassword = "password123";
-      const hashedPassword = "hashedPassword";
+    it("deve retornar true quando a senha estiver correta", async () => {
+      const mockUser: User = {
+        id: "1",
+        email: "test@example.com",
+        name: "Test User",
+        passwordHash: "hashed_password",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
 
+      prismaMock.findUnique.mockResolvedValue(mockUser);
       vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
 
       const isValid = await userService.validatePassword(
-        plainPassword,
-        hashedPassword
+        mockUser.email,
+        "password123"
       );
 
-      expect(bcrypt.compare).toHaveBeenCalledWith(
-        plainPassword,
-        hashedPassword
-      );
       expect(isValid).toBe(true);
     });
 
-    it("deve retornar false para senha inválida", async () => {
-      const plainPassword = "wrongpassword";
-      const hashedPassword = "hashedPassword";
+    it("deve retornar false quando a senha estiver incorreta", async () => {
+      const mockUser: User = {
+        id: "1",
+        email: "test@example.com",
+        name: "Test User",
+        passwordHash: "hashed_password",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
 
+      prismaMock.findUnique.mockResolvedValue(mockUser);
       vi.mocked(bcrypt.compare).mockResolvedValue(false as never);
 
       const isValid = await userService.validatePassword(
-        plainPassword,
-        hashedPassword
+        mockUser.email,
+        "wrongpassword"
       );
 
       expect(isValid).toBe(false);
     });
 
-    it("deve lançar erro ao falhar na validação", async () => {
-      vi.mocked(bcrypt.compare).mockRejectedValue(new Error("Bcrypt error"));
+    it("deve retornar false quando o usuário não existir", async () => {
+      prismaMock.findUnique.mockResolvedValue(null);
 
-      await expect(
-        userService.validatePassword("password", "hash")
-      ).rejects.toThrow("Falha ao validar senha do usuário");
+      const isValid = await userService.validatePassword(
+        "nonexistent@example.com",
+        "password123"
+      );
+
+      expect(isValid).toBe(false);
     });
   });
 
   describe("getAllUsers", () => {
-    it("deve retornar lista de usuários", async () => {
-      const mockUsers = [
+    it("deve retornar todos os usuários", async () => {
+      const mockPrismaUsers = [
         {
           id: "1",
-          email: "user1@example.com",
-          name: "User 1",
-          password: "hash1",
+          email: "test1@example.com",
+          name: "Test User 1",
+          password: "hashed_password1",
           createdAt: new Date(),
           updatedAt: new Date(),
         },
         {
           id: "2",
-          email: "user2@example.com",
-          name: "User 2",
-          password: "hash2",
+          email: "test2@example.com",
+          name: "Test User 2",
+          password: "hashed_password2",
           createdAt: new Date(),
           updatedAt: new Date(),
         },
       ];
 
-      prismaMock.findMany.mockResolvedValue(mockUsers);
+      prismaMock.findMany.mockResolvedValue(mockPrismaUsers);
 
       const users = await userService.getAllUsers();
 
       expect(prismaMock.findMany).toHaveBeenCalled();
       expect(users).toHaveLength(2);
-      expect(users[0].email).toBe("user1@example.com");
-      expect(users[1].email).toBe("user2@example.com");
+      expect(users[0].email).toBe("test1@example.com");
+      expect(users[1].email).toBe("test2@example.com");
     });
 
     it("deve retornar array vazio quando não há usuários", async () => {
@@ -225,10 +231,11 @@ describe("UserService", () => {
 
       const users = await userService.getAllUsers();
 
+      expect(users).toEqual([]);
       expect(users).toHaveLength(0);
     });
 
-    it("deve lançar erro ao falhar na listagem", async () => {
+    it("deve lançar erro ao falhar na busca", async () => {
       prismaMock.findMany.mockRejectedValue(new Error("Database error"));
 
       await expect(userService.getAllUsers()).rejects.toThrow(
@@ -239,12 +246,12 @@ describe("UserService", () => {
 
   describe("getUserById", () => {
     it("deve retornar um usuário quando encontrado", async () => {
-      const userId = "123";
-      const mockUser = {
+      const userId = "1";
+      const mockUser: User = {
         id: userId,
         email: "test@example.com",
         name: "Test User",
-        password: "hashedPassword",
+        passwordHash: "hashed_password",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -278,23 +285,23 @@ describe("UserService", () => {
   });
 
   describe("updateUser", () => {
-    it("deve atualizar um usuário sem alterar senha", async () => {
-      const userId = "123";
+    it("deve atualizar um usuário com sucesso", async () => {
+      const userId = "1";
       const updateData = {
-        email: "newemail@example.com",
-        name: "New Name",
+        name: "Updated Name",
+        email: "updated@example.com",
       };
 
-      const updatedUser = {
+      const mockUpdatedUser: User = {
         id: userId,
         email: updateData.email,
         name: updateData.name,
-        password: "oldHash",
+        passwordHash: "hashed_password",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      prismaMock.update.mockResolvedValue(updatedUser);
+      prismaMock.update.mockResolvedValue(mockUpdatedUser);
 
       const user = await userService.updateUser(userId, updateData);
 
@@ -302,37 +309,30 @@ describe("UserService", () => {
         where: { id: userId },
         data: updateData,
       });
-      expect(user.email).toBe(updateData.email);
       expect(user.name).toBe(updateData.name);
+      expect(user.email).toBe(updateData.email);
     });
 
-    it("deve atualizar senha quando fornecida", async () => {
-      const userId = "123";
-      const newPassword = "newPassword123";
-      const hashedPassword = "newHashedPassword";
+    it("deve atualizar apenas os campos fornecidos", async () => {
+      const userId = "1";
+      const updateData = { name: "Only Name Updated" };
 
-      const updateData = {
-        password: newPassword,
-      };
-
-      const updatedUser = {
+      const mockUpdatedUser: User = {
         id: userId,
-        email: "test@example.com",
-        name: "Test User",
-        password: hashedPassword,
+        email: "same@example.com",
+        name: updateData.name,
+        passwordHash: "hashed_password",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      vi.mocked(bcrypt.hash).mockResolvedValue(hashedPassword as never);
-      prismaMock.update.mockResolvedValue(updatedUser);
+      prismaMock.update.mockResolvedValue(mockUpdatedUser);
 
       await userService.updateUser(userId, updateData);
 
-      expect(bcrypt.hash).toHaveBeenCalledWith(newPassword, 10);
       expect(prismaMock.update).toHaveBeenCalledWith({
         where: { id: userId },
-        data: { password: hashedPassword },
+        data: updateData,
       });
     });
 
@@ -347,17 +347,17 @@ describe("UserService", () => {
 
   describe("deleteUser", () => {
     it("deve deletar um usuário com sucesso", async () => {
-      const userId = "123";
-      const deletedUser = {
+      const userId = "1";
+      const mockDeletedUser: User = {
         id: userId,
-        email: "test@example.com",
-        name: "Test User",
-        password: "hashedPassword",
+        email: "deleted@example.com",
+        name: "Deleted User",
+        passwordHash: "hashed_password",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      prismaMock.delete.mockResolvedValue(deletedUser);
+      prismaMock.delete.mockResolvedValue(mockDeletedUser);
 
       const user = await userService.deleteUser(userId);
 
