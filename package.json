@@ -6,9 +6,13 @@
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest watch",
     "test:create-prisma-environment": "npm link ./prisma/vitest-environment-prisma",
-    "test:install-prisma-environment": "npm link vitest-environment-prisma",
-    "test": "vitest run --dir src/services"
+    "test:install-prisma-environment": "npm link vitest-environment-prisma"
   },
   "keywords": [],
   "author": "",

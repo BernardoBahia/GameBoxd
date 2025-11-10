@@ -1,9 +1,44 @@
 import { PrismaClient } from "@prisma/client";
 import { List } from "../models/list.model";
+import { GameService } from "./game.service";
 
 const prisma = new PrismaClient();
+const gameService = new GameService();
 
 export class ListService {
+  // Função auxiliar para enriquecer lista com dados da API RAWG
+  private async enrichListWithGameDetails(list: any): Promise<List> {
+    if (list.listGames && list.listGames.length > 0) {
+      const enrichedListGames = await Promise.all(
+        list.listGames.map(async (listGame: any) => {
+          try {
+            const gameDetails = await gameService.getGameDetails(
+              parseInt(listGame.game.gameId)
+            );
+            return {
+              ...listGame,
+              game: {
+                ...listGame.game,
+                name: gameDetails.name,
+                background_image: gameDetails.background_image,
+                released: gameDetails.released,
+                genres: gameDetails.genres,
+              },
+            };
+          } catch (error) {
+            console.error(
+              `Erro ao buscar detalhes do jogo ${listGame.game.gameId}:`,
+              error
+            );
+            return listGame; // Retorna sem enriquecimento em caso de erro
+          }
+        })
+      );
+      return { ...list, listGames: enrichedListGames };
+    }
+    return list;
+  }
+
   async createList(name: string, userId: string): Promise<List> {
     try {
       const createdList = await prisma.list.create({
@@ -24,9 +59,20 @@ export class ListService {
     try {
       const lists = await prisma.list.findMany({
         where: { userId },
+        include: {
+          listGames: {
+            include: {
+              game: true,
+            },
+          },
+        },
       });
 
-      return lists;
+      const enrichedLists = await Promise.all(
+        lists.map((list) => this.enrichListWithGameDetails(list))
+      );
+
+      return enrichedLists;
     } catch (error) {
       console.error("Erro ao buscar listas do usuário:", error);
       throw new Error("Falha ao buscar listas do usuário");
@@ -88,9 +134,20 @@ export class ListService {
           id: listId,
           userId,
         },
+        include: {
+          listGames: {
+            include: {
+              game: true,
+            },
+          },
+        },
       });
 
-      return list;
+      if (!list) return null;
+
+      const enrichedList = await this.enrichListWithGameDetails(list);
+
+      return enrichedList;
     } catch (error) {
       console.error("Erro ao buscar lista por ID:", error);
       throw new Error("Falha ao buscar lista por ID");
@@ -108,10 +165,23 @@ export class ListService {
         throw new Error("Lista não encontrada ou sem permissão para editar");
       }
 
+      let game = await prisma.game.findUnique({
+        where: { gameId },
+      });
+
+      if (!game) {
+        game = await prisma.game.create({
+          data: {
+            gameId,
+            isLiked: false,
+          },
+        });
+      }
+
       await prisma.listGame.create({
         data: {
           listId,
-          gameId,
+          gameId: game.id,
         },
       });
     } catch (error) {
