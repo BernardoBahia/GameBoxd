@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { GameService } from "../../services/game.service";
 import { PrismaClient } from "@prisma/client";
+import { Game } from "../../models/game.model";
 
 vi.mock("axios");
 
@@ -65,7 +66,7 @@ describe("GameService", () => {
 
   describe("likeGame", () => {
     it("deve curtir um jogo quando ainda não curtido", async () => {
-      const mockGame = { id: "game-uuid", gameId: "123" };
+      const mockGame: Game = { id: "game-uuid", gameId: "123" };
 
       prismaMock.game.findUnique.mockResolvedValue(mockGame);
       prismaMock.userLikedGame.findUnique.mockResolvedValue(null);
@@ -91,7 +92,7 @@ describe("GameService", () => {
     });
 
     it("deve descurtir um jogo quando já curtido", async () => {
-      const mockGame = { id: "game-uuid", gameId: "123" };
+      const mockGame: Game = { id: "game-uuid", gameId: "123" };
       const mockLike = {
         id: "like-uuid",
         userId: "user-123",
@@ -112,7 +113,7 @@ describe("GameService", () => {
     });
 
     it("deve criar jogo no banco se não existir", async () => {
-      const mockGame = { id: "game-uuid", gameId: "123", isLiked: false };
+      const mockGame: Game = { id: "game-uuid", gameId: "123" };
 
       prismaMock.game.findUnique.mockResolvedValue(null);
       prismaMock.game.create.mockResolvedValue(mockGame);
@@ -189,7 +190,7 @@ describe("GameService", () => {
 
   describe("setGameStatus", () => {
     it("deve definir status para um novo jogo", async () => {
-      const mockGame = { id: "game-uuid", gameId: "123" };
+      const mockGame: Game = { id: "game-uuid", gameId: "123" };
 
       prismaMock.game.findUnique.mockResolvedValue(mockGame);
       prismaMock.userGameStatus.findUnique.mockResolvedValue(null);
@@ -218,7 +219,7 @@ describe("GameService", () => {
     });
 
     it("deve atualizar status quando já existe", async () => {
-      const mockGame = { id: "game-uuid", gameId: "123" };
+      const mockGame: Game = { id: "game-uuid", gameId: "123" };
       const mockExistingStatus = {
         id: "status-uuid",
         userId: "user-123",
@@ -250,7 +251,7 @@ describe("GameService", () => {
     });
 
     it("deve criar jogo no banco se não existir", async () => {
-      const mockGame = { id: "game-uuid", gameId: "123" };
+      const mockGame: Game = { id: "game-uuid", gameId: "123" };
 
       prismaMock.game.findUnique.mockResolvedValue(null);
       prismaMock.game.create.mockResolvedValue(mockGame);
@@ -280,7 +281,7 @@ describe("GameService", () => {
 
   describe("removeGameStatus", () => {
     it("deve remover status do jogo", async () => {
-      const mockGame = { id: "game-uuid", gameId: "123" };
+      const mockGame: Game = { id: "game-uuid", gameId: "123" };
 
       prismaMock.game.findUnique.mockResolvedValue(mockGame);
       prismaMock.userGameStatus.deleteMany.mockResolvedValue({ count: 1 });
