@@ -1,9 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { GameService } from "../../services/game.service";
 import { PrismaClient } from "@prisma/client";
 import { Game } from "../../models/game.model";
 
-vi.mock("axios");
+let mockAxiosGet = vi.fn();
+
+vi.mock("axios", () => ({
+  default: {
+    create: () => ({
+      get: (...args: any[]) => mockAxiosGet(...args),
+    }),
+  },
+}));
+
+import { GameService } from "../../services/game.service";
 
 vi.mock("@prisma/client", () => {
   const mockGame = {
@@ -62,6 +71,249 @@ describe("GameService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     gameService = new GameService();
+  });
+
+  describe("getGames", () => {
+    it("deve retornar lista de jogos da API", async () => {
+      mockAxiosGet.mockResolvedValue({
+        data: {
+          results: [
+            {
+              id: 1,
+              name: "Game 1",
+              released: "2020-01-01",
+              background_image: "image1.jpg",
+            },
+            {
+              id: 2,
+              name: "Game 2",
+              released: "2021-01-01",
+              background_image: "image2.jpg",
+            },
+          ],
+        },
+      });
+
+      const games = await gameService.getGames(1, 10);
+
+      expect(games).toHaveLength(2);
+      expect(games[0].name).toBe("Game 1");
+      expect(games[1].name).toBe("Game 2");
+    });
+
+    it("deve lançar erro quando API falhar", async () => {
+      mockAxiosGet.mockRejectedValue(new Error("API Error"));
+
+      await expect(gameService.getGames()).rejects.toThrow(
+        "Erro ao obter jogos"
+      );
+    });
+  });
+
+  describe("searchGames", () => {
+    it("deve buscar jogos por query com detalhes completos", async () => {
+      mockAxiosGet
+        .mockResolvedValueOnce({
+          data: {
+            results: [{ id: 10, name: "Minecraft" }],
+          },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            id: 10,
+            name: "Minecraft",
+            released: "2011-11-18",
+            background_image: "minecraft.jpg",
+            genres: [{ name: "Sandbox" }],
+            developers: [{ name: "Mojang" }],
+            publishers: [{ name: "Microsoft" }],
+            platforms: [{ platform: { name: "PC" } }],
+          },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            results: [],
+          },
+        });
+
+      const games = await gameService.searchGames("minecraft", 1, 10);
+
+      expect(games).toHaveLength(1);
+      expect(games[0].name).toBe("Minecraft");
+      expect(games[0].genres).toContain("Sandbox");
+      expect(games[0].developers).toContain("Mojang");
+    });
+
+    it("deve lançar erro quando busca falhar", async () => {
+      mockAxiosGet.mockRejectedValue(new Error("API Error"));
+
+      await expect(gameService.searchGames("test")).rejects.toThrow(
+        "Erro ao buscar jogos"
+      );
+    });
+  });
+
+  describe("searchGamesByPlatform", () => {
+    it("deve buscar jogos por plataforma", async () => {
+      mockAxiosGet
+        .mockResolvedValueOnce({
+          data: {
+            results: [{ id: 30, name: "Halo" }],
+          },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            id: 30,
+            name: "Halo",
+            released: "2021-12-08",
+            background_image: "halo.jpg",
+            genres: [{ name: "Shooter" }],
+            developers: [{ name: "343 Industries" }],
+            publishers: [{ name: "Xbox" }],
+            platforms: [{ platform: { name: "Xbox" } }],
+          },
+        })
+        .mockResolvedValueOnce({
+          data: { results: [] },
+        });
+
+      const games = await gameService.searchGamesByPlatform(186, 1, 10);
+
+      expect(games).toHaveLength(1);
+      expect(games[0].name).toBe("Halo");
+    });
+
+    it("deve lançar erro ao falhar", async () => {
+      mockAxiosGet.mockRejectedValue(new Error("API Error"));
+
+      await expect(gameService.searchGamesByPlatform(186)).rejects.toThrow(
+        "Erro ao buscar jogos por plataforma"
+      );
+    });
+  });
+
+  describe("searchGamesByGenre", () => {
+    it("deve buscar jogos por gênero", async () => {
+      mockAxiosGet
+        .mockResolvedValueOnce({
+          data: {
+            results: [{ id: 40, name: "Dark Souls" }],
+          },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            id: 40,
+            name: "Dark Souls",
+            released: "2011-09-22",
+            background_image: "darksouls.jpg",
+            genres: [{ name: "RPG" }],
+            developers: [{ name: "FromSoftware" }],
+            publishers: [{ name: "Bandai Namco" }],
+            platforms: [{ platform: { name: "PC" } }],
+          },
+        })
+        .mockResolvedValueOnce({
+          data: { results: [] },
+        });
+
+      const games = await gameService.searchGamesByGenre(5, 1, 10);
+
+      expect(games).toHaveLength(1);
+      expect(games[0].name).toBe("Dark Souls");
+      expect(games[0].genres).toContain("RPG");
+    });
+
+    it("deve lançar erro ao falhar", async () => {
+      mockAxiosGet.mockRejectedValue(new Error("API Error"));
+
+      await expect(gameService.searchGamesByGenre(5)).rejects.toThrow(
+        "Erro ao buscar jogos por gênero"
+      );
+    });
+  });
+
+  describe("searchGamesByDlc", () => {
+    it("deve buscar jogos por DLC", async () => {
+      mockAxiosGet
+        .mockResolvedValueOnce({
+          data: {
+            results: [{ id: 50, name: "Witcher DLC" }],
+          },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            id: 50,
+            name: "Witcher DLC",
+            released: "2016-05-31",
+            background_image: "dlc.jpg",
+            genres: [{ name: "RPG" }],
+            developers: [{ name: "CD Projekt Red" }],
+            publishers: [{ name: "CD Projekt" }],
+            platforms: [{ platform: { name: "PC" } }],
+          },
+        })
+        .mockResolvedValueOnce({
+          data: { results: [] },
+        });
+
+      const games = await gameService.searchGamesByDlc(100, 1, 10);
+
+      expect(games).toHaveLength(1);
+      expect(games[0].name).toBe("Witcher DLC");
+    });
+
+    it("deve lançar erro ao falhar", async () => {
+      mockAxiosGet.mockRejectedValue(new Error("API Error"));
+
+      await expect(gameService.searchGamesByDlc(100)).rejects.toThrow(
+        "Erro ao buscar jogos por DLC"
+      );
+    });
+  });
+
+  describe("getGameDetails", () => {
+    it("deve retornar detalhes completos de um jogo", async () => {
+      mockAxiosGet
+        .mockResolvedValueOnce({
+          data: {
+            id: 60,
+            name: "Elden Ring",
+            released: "2022-02-25",
+            background_image: "eldenring.jpg",
+            genres: [{ name: "Action RPG" }],
+            developers: [{ name: "FromSoftware" }],
+            publishers: [{ name: "Bandai Namco" }],
+            platforms: [{ platform: { name: "PC" } }],
+          },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            results: [
+              {
+                id: 61,
+                name: "Shadow of the Erdtree",
+                released: "2024-06-21",
+              },
+            ],
+          },
+        });
+
+      const game = await gameService.getGameDetails(60);
+
+      expect(game.id).toBe(60);
+      expect(game.name).toBe("Elden Ring");
+      expect(game.genres).toContain("Action RPG");
+      expect(game.dlcs).toHaveLength(1);
+      expect(game.dlcs[0].name).toBe("Shadow of the Erdtree");
+    });
+
+    it("deve lançar erro ao falhar", async () => {
+      mockAxiosGet.mockRejectedValue(new Error("API Error"));
+
+      await expect(gameService.getGameDetails(999)).rejects.toThrow(
+        "Erro ao buscar detalhes do jogo"
+      );
+    });
   });
 
   describe("likeGame", () => {

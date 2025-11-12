@@ -165,7 +165,6 @@ describe("UserService - Testes de Integração", () => {
 
   describe("getAllUsers", () => {
     it("deve retornar lista de usuários", async () => {
-      // Cria alguns usuários para teste
       const user1 = await userService.createUser(
         `list-1-${Date.now()}@example.com`,
         "User 1",
