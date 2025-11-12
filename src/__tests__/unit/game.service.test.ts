@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import type { Mock } from "vitest";
 import { PrismaClient } from "@prisma/client";
 import { Game } from "../../models/game.model";
 
@@ -42,8 +43,6 @@ vi.mock("@prisma/client", () => {
   };
 });
 
-import type { Mock } from "vitest";
-
 const prisma = new PrismaClient();
 const prismaMock = {
   game: prisma.game as unknown as {
@@ -72,6 +71,10 @@ describe("GameService", () => {
     vi.clearAllMocks();
     gameService = new GameService();
   });
+
+  // ==========================================================================
+  // TESTES DE MÉTODOS DE API EXTERNA (RAWG)
+  // ==========================================================================
 
   describe("getGames", () => {
     it("deve retornar lista de jogos da API", async () => {

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { ListService } from "../../services/list.service";
+import type { Mock } from "vitest";
 import { PrismaClient } from "@prisma/client";
+import { ListService } from "../../services/list.service";
 import { List } from "../../models/list.model";
 
 vi.mock("../../services/game.service", () => ({
@@ -34,8 +35,6 @@ vi.mock("@prisma/client", () => {
     },
   };
 });
-
-import type { Mock } from "vitest";
 
 const prisma = new PrismaClient();
 const prismaMock = {

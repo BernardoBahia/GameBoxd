@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { UserService } from "../../services/user.service";
+import type { Mock } from "vitest";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { UserService } from "../../services/user.service";
 import { User } from "../../models/user.model";
 
 vi.mock("@prisma/client", () => {
@@ -22,6 +23,7 @@ vi.mock("@prisma/client", () => {
   };
 });
 
+// Mock do bcrypt
 vi.mock("bcryptjs", () => ({
   default: {
     hash: vi.fn(),
@@ -30,8 +32,6 @@ vi.mock("bcryptjs", () => ({
   hash: vi.fn(),
   compare: vi.fn(),
 }));
-
-import type { Mock } from "vitest";
 
 const prisma = new PrismaClient();
 const prismaMock = prisma.user as unknown as {
