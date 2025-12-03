@@ -1,0 +1,7 @@
+{
+  "[prisma]": {
+    "editor.defaultFormatter": "Prisma.prisma"
+  },
+  "prisma.trace.server": "off",
+  "prisma.prismaSchemaValidation": false
+}

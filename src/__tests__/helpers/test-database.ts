@@ -19,13 +19,7 @@ export class TestDatabase {
     this.schema = `test_${randomUUID()}`;
     const databaseUrl = generateDatabaseURL(this.schema);
 
-    this.prisma = new PrismaClient({
-      datasources: {
-        db: {
-          url: databaseUrl,
-        },
-      },
-    });
+    this.prisma = new PrismaClient();
   }
 
   async setup() {

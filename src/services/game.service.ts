@@ -5,10 +5,9 @@ import {
   GameSummary,
   GameDetails,
 } from "../models/game.model";
-import { PrismaClient } from "@prisma/client";
+import prisma from "../lib/prisma";
 
 const RawgAPIKey = process.env.RAWG_API_KEY;
-const prisma = new PrismaClient();
 
 const rawgApi = axios.create({
   baseURL: "https://api.rawg.io/api",

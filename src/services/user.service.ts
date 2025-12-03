@@ -1,8 +1,7 @@
-import { PrismaClient, User as PrismaUser } from "@prisma/client";
+import { User as PrismaUser } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { User } from "../models/user.model";
-
-const prisma = new PrismaClient();
+import prisma from "../lib/prisma";
 
 export class UserService {
   private toUserModel(prismaUser: PrismaUser): User {

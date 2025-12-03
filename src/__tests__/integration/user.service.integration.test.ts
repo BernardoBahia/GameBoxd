@@ -1,9 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
-import { PrismaClient } from "@prisma/client";
 import { UserService } from "../../services/user.service";
 import { User } from "../../models/user.model";
-
-const prisma = new PrismaClient();
+import prisma from "../../lib/prisma";
 
 describe("UserService - Testes de Integração", () => {
   let userService: UserService;

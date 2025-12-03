@@ -1,8 +1,6 @@
-import { PrismaClient } from "@prisma/client";
 import { List } from "../models/list.model";
 import { GameService } from "./game.service";
-
-const prisma = new PrismaClient();
+import prisma from "../lib/prisma";
 const gameService = new GameService();
 
 export class ListService {

@@ -1,9 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
-import { PrismaClient } from "@prisma/client";
 import { GameService } from "../../services/game.service";
 import { UserService } from "../../services/user.service";
-
-const prisma = new PrismaClient();
+import {
+  Game,
+  GameDLC,
+  GameSummary,
+  GameDetails,
+} from "../../models/game.model";
+import prisma from "../../lib/prisma";
 
 describe("GameService - Testes de Integração", () => {
   let gameService: GameService;
@@ -60,7 +64,7 @@ describe("GameService - Testes de Integração", () => {
       expect(result.message).toBe("Jogo curtido com sucesso");
       expect(result.liked).toBe(true);
 
-      const game = await prisma.game.findUnique({
+      const game: Game | null = await prisma.game.findUnique({
         where: { gameId },
       });
       expect(game).toBeDefined();
@@ -80,7 +84,7 @@ describe("GameService - Testes de Integração", () => {
       const likeResult = await gameService.likeGame(testUserId, gameId);
       expect(likeResult.liked).toBe(true);
 
-      const game = await prisma.game.findUnique({
+      const game: Game | null = await prisma.game.findUnique({
         where: { gameId },
       });
       if (game) {
@@ -104,7 +108,7 @@ describe("GameService - Testes de Integração", () => {
       let result = await gameService.likeGame(testUserId, gameId);
       expect(result.liked).toBe(true);
 
-      const game = await prisma.game.findUnique({
+      const game: Game | null = await prisma.game.findUnique({
         where: { gameId },
       });
       if (game) {
@@ -130,10 +134,10 @@ describe("GameService - Testes de Integração", () => {
       await gameService.likeGame(testUserId, gameId1);
       await gameService.likeGame(testUserId, gameId2);
 
-      const game1 = await prisma.game.findUnique({
+      const game1: Game | null = await prisma.game.findUnique({
         where: { gameId: gameId1 },
       });
-      const game2 = await prisma.game.findUnique({
+      const game2: Game | null = await prisma.game.findUnique({
         where: { gameId: gameId2 },
       });
       if (game1) testGameIds.push(game1.id);
@@ -166,7 +170,9 @@ describe("GameService - Testes de Integração", () => {
       const gameId = `unliked-game-${Date.now()}`;
 
       await gameService.likeGame(testUserId, gameId);
-      const game = await prisma.game.findUnique({ where: { gameId } });
+      const game: Game | null = await prisma.game.findUnique({
+        where: { gameId },
+      });
       if (game) testGameIds.push(game.id);
 
       await gameService.likeGame(testUserId, gameId);
@@ -190,7 +196,9 @@ describe("GameService - Testes de Integração", () => {
       expect(result.message).toBe("Status do jogo definido com sucesso");
       expect(result.status).toBe("PLAYING");
 
-      const game = await prisma.game.findUnique({ where: { gameId } });
+      const game: Game | null = await prisma.game.findUnique({
+        where: { gameId },
+      });
       if (game) {
         testGameIds.push(game.id);
 
@@ -212,7 +220,9 @@ describe("GameService - Testes de Integração", () => {
 
       expect(result.status).toBe("COMPLETED");
 
-      const game = await prisma.game.findUnique({ where: { gameId } });
+      const game: Game | null = await prisma.game.findUnique({
+        where: { gameId },
+      });
       if (game) testGameIds.push(game.id);
     });
 
@@ -227,7 +237,9 @@ describe("GameService - Testes de Integração", () => {
 
       expect(result.status).toBe("WANT_TO_PLAY");
 
-      const game = await prisma.game.findUnique({ where: { gameId } });
+      const game: Game | null = await prisma.game.findUnique({
+        where: { gameId },
+      });
       if (game) testGameIds.push(game.id);
     });
 
@@ -242,7 +254,9 @@ describe("GameService - Testes de Integração", () => {
       expect(result.status).toBe("WANT_TO_PLAY");
       expect(result.message).toBe("Status do jogo definido com sucesso");
 
-      const game = await prisma.game.findUnique({ where: { gameId } });
+      const game: Game | null = await prisma.game.findUnique({
+        where: { gameId },
+      });
       if (game) testGameIds.push(game.id);
 
       result = await gameService.setGameStatus(testUserId, gameId, "PLAYING");
@@ -265,7 +279,9 @@ describe("GameService - Testes de Integração", () => {
     it("deve criar jogo no banco se não existir ao definir status", async () => {
       const gameId = `new-game-status-${Date.now()}`;
 
-      let game = await prisma.game.findUnique({ where: { gameId } });
+      let game: Game | null = await prisma.game.findUnique({
+        where: { gameId },
+      });
       expect(game).toBeNull();
 
       await gameService.setGameStatus(testUserId, gameId, "PLAYING");
@@ -316,13 +332,13 @@ describe("GameService - Testes de Integração", () => {
       await gameService.setGameStatus(testUserId, completedGame, "COMPLETED");
       await gameService.setGameStatus(testUserId, wantGame, "WANT_TO_PLAY");
 
-      const game1 = await prisma.game.findUnique({
+      const game1: Game | null = await prisma.game.findUnique({
         where: { gameId: playingGame },
       });
-      const game2 = await prisma.game.findUnique({
+      const game2: Game | null = await prisma.game.findUnique({
         where: { gameId: completedGame },
       });
-      const game3 = await prisma.game.findUnique({
+      const game3: Game | null = await prisma.game.findUnique({
         where: { gameId: wantGame },
       });
       if (game1) testGameIds.push(game1.id);
@@ -353,8 +369,12 @@ describe("GameService - Testes de Integração", () => {
       await gameService.setGameStatus(testUserId, game1, "PLAYING");
       await gameService.setGameStatus(testUserId, game2, "COMPLETED");
 
-      const g1 = await prisma.game.findUnique({ where: { gameId: game1 } });
-      const g2 = await prisma.game.findUnique({ where: { gameId: game2 } });
+      const g1: Game | null = await prisma.game.findUnique({
+        where: { gameId: game1 },
+      });
+      const g2: Game | null = await prisma.game.findUnique({
+        where: { gameId: game2 },
+      });
       if (g1) testGameIds.push(g1.id);
       if (g2) testGameIds.push(g2.id);
 
@@ -378,8 +398,12 @@ describe("GameService - Testes de Integração", () => {
 
       await gameService.setGameStatus(testUserId, newGame, "PLAYING");
 
-      const g1 = await prisma.game.findUnique({ where: { gameId: oldGame } });
-      const g2 = await prisma.game.findUnique({ where: { gameId: newGame } });
+      const g1: Game | null = await prisma.game.findUnique({
+        where: { gameId: oldGame },
+      });
+      const g2: Game | null = await prisma.game.findUnique({
+        where: { gameId: newGame },
+      });
       if (g1) testGameIds.push(g1.id);
       if (g2) testGameIds.push(g2.id);
 
@@ -437,7 +461,9 @@ describe("GameService - Testes de Integração", () => {
       let result = await gameService.likeGame(testUserId, gameId);
       expect(result.liked).toBe(true);
 
-      const game = await prisma.game.findUnique({ where: { gameId } });
+      const game: Game | null = await prisma.game.findUnique({
+        where: { gameId },
+      });
       if (game) testGameIds.push(game.id);
 
       let likedGames = await gameService.getUserLikedGames(testUserId);
@@ -481,6 +507,93 @@ describe("GameService - Testes de Integração", () => {
 
       likedGames = await gameService.getUserLikedGames(testUserId);
       expect(likedGames).not.toContain(gameId);
+    });
+  });
+
+  describe("Testes de API RAWG - getGames", () => {
+    it("deve retornar lista de jogos com tipo GameSummary", async () => {
+      const games: GameSummary[] = await gameService.getGames(1, 5);
+
+      expect(games).toBeDefined();
+      expect(Array.isArray(games)).toBe(true);
+      expect(games.length).toBeGreaterThan(0);
+      expect(games.length).toBeLessThanOrEqual(5);
+
+      games.forEach((game: GameSummary) => {
+        expect(game).toHaveProperty("id");
+        expect(game).toHaveProperty("name");
+        expect(game).toHaveProperty("released");
+        expect(game).toHaveProperty("background_image");
+        expect(typeof game.id).toBe("number");
+        expect(typeof game.name).toBe("string");
+      });
+    });
+  });
+
+  describe("Testes de API RAWG - searchGames", () => {
+    it("deve buscar jogos e retornar GameDetails com DLCs", async () => {
+      const searchResults: GameDetails[] = await gameService.searchGames(
+        "The Witcher",
+        1,
+        2
+      );
+
+      expect(searchResults).toBeDefined();
+      expect(Array.isArray(searchResults)).toBe(true);
+
+      if (searchResults.length > 0) {
+        const game: GameDetails = searchResults[0];
+
+        expect(game).toHaveProperty("id");
+        expect(game).toHaveProperty("name");
+        expect(game).toHaveProperty("released");
+        expect(game).toHaveProperty("background_image");
+        expect(game).toHaveProperty("genres");
+        expect(game).toHaveProperty("developers");
+        expect(game).toHaveProperty("publishers");
+        expect(game).toHaveProperty("platforms");
+        expect(game).toHaveProperty("dlcs");
+
+        expect(Array.isArray(game.genres)).toBe(true);
+        expect(Array.isArray(game.developers)).toBe(true);
+        expect(Array.isArray(game.publishers)).toBe(true);
+        expect(Array.isArray(game.platforms)).toBe(true);
+        expect(Array.isArray(game.dlcs)).toBe(true);
+
+        if (game.dlcs.length > 0) {
+          const dlc: GameDLC = game.dlcs[0];
+          expect(dlc).toHaveProperty("id");
+          expect(dlc).toHaveProperty("name");
+          expect(dlc).toHaveProperty("released");
+          expect(typeof dlc.id).toBe("number");
+          expect(typeof dlc.name).toBe("string");
+        }
+      }
+    });
+  });
+
+  describe("Testes de API RAWG - getGameDetails", () => {
+    it("deve obter detalhes completos de um jogo específico", async () => {
+      const gameDetails: GameDetails = await gameService.getGameDetails(3328);
+
+      expect(gameDetails).toBeDefined();
+      expect(gameDetails.id).toBe(3328);
+      expect(gameDetails.name).toBeDefined();
+      expect(typeof gameDetails.name).toBe("string");
+
+      expect(Array.isArray(gameDetails.genres)).toBe(true);
+      expect(Array.isArray(gameDetails.developers)).toBe(true);
+      expect(Array.isArray(gameDetails.publishers)).toBe(true);
+      expect(Array.isArray(gameDetails.platforms)).toBe(true);
+      expect(Array.isArray(gameDetails.dlcs)).toBe(true);
+
+      if (gameDetails.dlcs.length > 0) {
+        gameDetails.dlcs.forEach((dlc: GameDLC) => {
+          expect(dlc).toHaveProperty("id");
+          expect(dlc).toHaveProperty("name");
+          expect(dlc).toHaveProperty("released");
+        });
+      }
     });
   });
 });
