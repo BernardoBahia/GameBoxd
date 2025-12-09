@@ -4,7 +4,6 @@ import prisma from "../lib/prisma";
 const gameService = new GameService();
 
 export class ListService {
-  // Função auxiliar para enriquecer lista com dados da API RAWG
   private async enrichListWithGameDetails(list: any): Promise<List> {
     if (list.listGames && list.listGames.length > 0) {
       const enrichedListGames = await Promise.all(
@@ -28,7 +27,7 @@ export class ListService {
               `Erro ao buscar detalhes do jogo ${listGame.game.gameId}:`,
               error
             );
-            return listGame; // Retorna sem enriquecimento em caso de erro
+            return listGame;
           }
         })
       );
