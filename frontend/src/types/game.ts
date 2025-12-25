@@ -25,7 +25,7 @@ export interface Game {
   isLiked: boolean;
 }
 
-export type GameStatusType = 'PLAYING' | 'COMPLETED' | 'WANT_TO_PLAY';
+export type GameStatusType = "PLAYING" | "COMPLETED" | "WANT_TO_PLAY";
 
 export interface UserGameStatus {
   id: string;

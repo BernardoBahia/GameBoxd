@@ -1,13 +1,31 @@
 import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { register } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Register:", { name, email, password });
+    setError("");
+    setLoading(true);
+
+    try {
+      await register({ name, email, password });
+      navigate("/");
+    } catch (err: any) {
+      setError(
+        err.response?.data?.error || "Erro ao criar conta. Tente novamente."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -17,6 +35,11 @@ export default function Register() {
           Criar Conta
         </h2>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              {error}
+            </div>
+          )}
           <div>
             <label
               htmlFor="name"
@@ -67,19 +90,20 @@ export default function Register() {
           </div>
           <button
             type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            disabled={loading}
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Criar Conta
+            {loading ? "Criando conta..." : "Criar Conta"}
           </button>
         </form>
         <p className="mt-4 text-center text-sm text-gray-600">
           Já tem uma conta?{" "}
-          <a
-            href="/login"
+          <Link
+            to="/login"
             className="font-medium text-blue-600 hover:text-blue-500"
           >
             Faça login
-          </a>
+          </Link>
         </p>
       </div>
     </div>

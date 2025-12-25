@@ -14,7 +14,7 @@ export class LoginService {
 
     const isValidPassword = await userService.validatePassword(
       password,
-      user.password
+      user.passwordHash
     );
 
     if (!isValidPassword) {
