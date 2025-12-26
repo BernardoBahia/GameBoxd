@@ -3,12 +3,14 @@ import { useParams } from "react-router";
 import { gameService, reviewService } from "../services";
 import type { GameDetails, Review } from "../types";
 import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
 import { Navbar, LoadingSpinner } from "../components";
 
 export default function GameDetail() {
   const { id } = useParams<{ id: string }>();
   const gameId = id!;
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   const [game, setGame] = useState<GameDetails | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -44,7 +46,7 @@ export default function GameDetail() {
       setAvgRating(avgData.averageRating);
     } catch (err) {
       setError("Erro ao carregar dados do jogo");
-      console.error(err);
+      showToast("Erro ao carregar dados do jogo", "error");
     } finally {
       setLoading(false);
     }
@@ -69,9 +71,9 @@ export default function GameDetail() {
       // Atualizar rating médio
       const avgData = await reviewService.getAverageRating(gameId);
       setAvgRating(avgData.averageRating);
+      showToast("Review publicada com sucesso!", "success");
     } catch (err) {
-      console.error("Erro ao criar review:", err);
-      alert("Erro ao criar review");
+      showToast("Erro ao criar review", "error");
     } finally {
       setSubmittingReview(false);
     }
@@ -86,9 +88,9 @@ export default function GameDetail() {
       // Atualizar rating médio
       const avgData = await reviewService.getAverageRating(gameId);
       setAvgRating(avgData.averageRating);
+      showToast("Review deletada com sucesso!", "success");
     } catch (err) {
-      console.error("Erro ao deletar review:", err);
-      alert("Erro ao deletar review");
+      showToast("Erro ao deletar review", "error");
     }
   };
 

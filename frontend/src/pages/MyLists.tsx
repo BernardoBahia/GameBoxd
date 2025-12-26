@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
 import { listService } from "../services";
 import type { List, GameSummary } from "../types";
 import { Navbar, LoadingSpinner } from "../components";
 
 export default function MyLists() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [lists, setLists] = useState<List[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedList, setSelectedList] = useState<List | null>(null);
@@ -37,7 +39,7 @@ export default function MyLists() {
       const userLists = await listService.getListsByUserId(user.id);
       setLists(userLists);
     } catch (err) {
-      console.error("Erro ao carregar listas:", err);
+      showToast("Erro ao carregar listas", "error");
     } finally {
       setLoading(false);
     }
@@ -51,7 +53,7 @@ export default function MyLists() {
       // Por ora, vamos apenas mostrar IDs (você pode melhorar buscando detalhes)
       setListGames([]);
     } catch (err) {
-      console.error("Erro ao carregar jogos da lista:", err);
+      showToast("Erro ao carregar jogos da lista", "error");
     } finally {
       setLoadingGames(false);
     }
@@ -76,9 +78,9 @@ export default function MyLists() {
       setShowCreateForm(false);
       setNewListName("");
       setNewListIsPublic(false);
+      showToast("Lista criada com sucesso!", "success");
     } catch (err) {
-      console.error("Erro ao criar lista:", err);
-      alert("Erro ao criar lista");
+      showToast("Erro ao criar lista", "error");
     } finally {
       setCreatingList(false);
     }
@@ -93,9 +95,9 @@ export default function MyLists() {
       if (selectedList?.id === listId) {
         setSelectedList(null);
       }
+      showToast("Lista deletada com sucesso!", "success");
     } catch (err) {
-      console.error("Erro ao deletar lista:", err);
-      alert("Erro ao deletar lista");
+      showToast("Erro ao deletar lista", "error");
     }
   };
 
@@ -112,9 +114,9 @@ export default function MyLists() {
       if (selectedList?.id === listId) {
         setSelectedList({ ...selectedList, name: editListName });
       }
+      showToast("Lista renomeada com sucesso!", "success");
     } catch (err) {
-      console.error("Erro ao renomear lista:", err);
-      alert("Erro ao renomear lista");
+      showToast("Erro ao renomear lista", "error");
     }
   };
 
@@ -131,9 +133,12 @@ export default function MyLists() {
       if (selectedList?.id === listId) {
         setSelectedList({ ...selectedList, isPublic: !isPublic });
       }
+      showToast(
+        `Lista agora é ${!isPublic ? "pública" : "privada"}!`,
+        "success"
+      );
     } catch (err) {
-      console.error("Erro ao alterar privacidade:", err);
-      alert("Erro ao alterar privacidade");
+      showToast("Erro ao alterar privacidade", "error");
     }
   };
 

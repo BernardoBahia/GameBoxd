@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
 import { reviewService, gameService } from "../services";
 import type { Review, GameSummary } from "../types";
 import { Navbar, LoadingSpinner } from "../components";
 
 export default function Profile() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [likedGames, setLikedGames] = useState<GameSummary[]>([]);
   const [gamesByStatus, setGamesByStatus] = useState<{
@@ -63,7 +65,7 @@ export default function Profile() {
         wantToPlay,
       });
     } catch (err) {
-      console.error("Erro ao carregar dados do usuário:", err);
+      showToast("Erro ao carregar dados do perfil", "error");
     } finally {
       setLoading(false);
     }
@@ -75,9 +77,9 @@ export default function Profile() {
     try {
       await reviewService.deleteReview(reviewId, user.id);
       setReviews(reviews.filter((r) => r.id !== reviewId));
+      showToast("Review deletada com sucesso!", "success");
     } catch (err) {
-      console.error("Erro ao deletar review:", err);
-      alert("Erro ao deletar review");
+      showToast("Erro ao deletar review", "error");
     }
   };
 
