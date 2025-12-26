@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -18,8 +19,22 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/games" element={<Games />} />
           <Route path="/games/:id" element={<GameDetail />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/my-lists" element={<MyLists />} />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-lists"
+            element={
+              <ProtectedRoute>
+                <MyLists />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </Router>
     </AuthProvider>
