@@ -4,7 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { listService } from "../services";
 import type { List, GameSummary } from "../types";
-import { Navbar, LoadingSpinner } from "../components";
+import { Navbar, SkeletonGameCard, EmptyState, Skeleton } from "../components";
 
 export default function MyLists() {
   const { user } = useAuth();
@@ -167,14 +167,33 @@ export default function MyLists() {
   }
 
   if (loading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-6">
+            <Skeleton className="h-8 w-48" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1 space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-24" />
+              ))}
+            </div>
+            <div className="lg:col-span-2">
+              <Skeleton className="h-64" />
+            </div>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Minhas Listas</h1>
           <button
@@ -242,17 +261,13 @@ export default function MyLists() {
 
         {/* Lists Grid */}
         {lists.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-xl text-gray-600 mb-6">
-              Você ainda não criou nenhuma lista
-            </p>
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-            >
-              Criar Primeira Lista
-            </button>
-          </div>
+          <EmptyState
+            icon="📝"
+            title="Você ainda não tem listas"
+            message="Crie listas personalizadas para organizar seus jogos favoritos, jogos para jogar ou qualquer outra categoria!"
+            actionLabel="Criar Primeira Lista"
+            onAction={() => setShowCreateForm(true)}
+          />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Lists Sidebar */}
@@ -356,17 +371,13 @@ export default function MyLists() {
                       <div className="inline-block w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
                     </div>
                   ) : listGames.length === 0 ? (
-                    <div className="text-center py-12">
-                      <p className="text-gray-600 mb-4">
-                        Esta lista ainda não tem jogos
-                      </p>
-                      <Link
-                        to="/games"
-                        className="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-                      >
-                        Adicionar Jogos
-                      </Link>
-                    </div>
+                    <EmptyState
+                      icon="🎮"
+                      title="Lista vazia"
+                      message="Esta lista ainda não tem jogos. Explore o catálogo e adicione seus jogos favoritos!"
+                      actionLabel="Adicionar Jogos"
+                      onAction={() => (window.location.href = "/games")}
+                    />
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                       {listGames.map((game) => (

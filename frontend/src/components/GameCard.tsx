@@ -8,12 +8,12 @@ interface GameCardProps {
 
 export default function GameCard({ game, onLike }: GameCardProps) {
   return (
-    <div className="bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden">
+    <div className="bg-white rounded-lg shadow hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:scale-105">
       <Link to={`/games/${game.id}`}>
         <img
           src={game.background_image || "/placeholder-game.jpg"}
           alt={game.name}
-          className="w-full h-48 object-cover"
+          className="w-full h-48 object-cover transition-transform duration-300 hover:scale-110"
         />
       </Link>
       <div className="p-4">
@@ -29,7 +29,7 @@ export default function GameCard({ game, onLike }: GameCardProps) {
           {onLike && (
             <button
               onClick={() => onLike(game.id)}
-              className="text-sm text-indigo-600 hover:text-indigo-800 transition"
+              className="text-sm text-indigo-600 hover:text-indigo-800 transition-all duration-200 hover:scale-110 active:scale-95"
             >
               ❤️ Curtir
             </button>

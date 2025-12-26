@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { gameService } from "../services";
 import type { GameSummary } from "../types";
-import { Navbar, GameCard, LoadingSpinner } from "../components";
+import { Navbar, GameCard, SkeletonGameCard, EmptyState } from "../components";
 
 export default function Games() {
   const [games, setGames] = useState<GameSummary[]>([]);
@@ -65,16 +65,12 @@ export default function Games() {
     }
   };
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
         {/* Search Bar */}
         <div className="mb-8">
           <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
@@ -88,7 +84,7 @@ export default function Games() {
               />
               <button
                 type="submit"
-                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
               >
                 Buscar
               </button>
@@ -104,17 +100,28 @@ export default function Games() {
         )}
 
         {/* Games Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {games.map((game) => (
-            <GameCard key={game.id} game={game} onLike={handleLike} />
-          ))}
-        </div>
-
-        {/* Empty State */}
-        {games.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <p className="text-xl text-gray-600">Nenhum jogo encontrado</p>
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <SkeletonGameCard key={i} />
+            ))}
           </div>
+        ) : games.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {games.map((game) => (
+              <GameCard key={game.id} game={game} onLike={handleLike} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon="🎮"
+            title="Nenhum jogo encontrado"
+            message={
+              searchQuery
+                ? `Não encontramos jogos com "${searchQuery}". Tente buscar por outro termo!`
+                : "Ainda não há jogos cadastrados."
+            }
+          />
         )}
 
         {/* Pagination */}
@@ -123,7 +130,7 @@ export default function Games() {
             <button
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md"
             >
               Anterior
             </button>
@@ -135,7 +142,7 @@ export default function Games() {
                 setCurrentPage((prev) => Math.min(prev + 1, totalPages))
               }
               disabled={currentPage === totalPages}
-              className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md"
             >
               Próxima
             </button>

@@ -4,7 +4,12 @@ import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { reviewService, gameService } from "../services";
 import type { Review, GameSummary } from "../types";
-import { Navbar, LoadingSpinner } from "../components";
+import {
+  Navbar,
+  SkeletonReviewCard,
+  SkeletonGameCard,
+  EmptyState,
+} from "../components";
 
 export default function Profile() {
   const { user } = useAuth();
@@ -103,14 +108,25 @@ export default function Profile() {
   }
 
   if (loading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <SkeletonReviewCard key={i} />
+            ))}
+          </div>
+        </main>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
         {/* User Info */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <div className="flex items-center gap-4">
@@ -188,17 +204,13 @@ export default function Profile() {
           {activeTab === "reviews" && (
             <div className="space-y-4">
               {reviews.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-gray-600 mb-4">
-                    Você ainda não fez nenhuma review
-                  </p>
-                  <Link
-                    to="/games"
-                    className="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-                  >
-                    Explorar Jogos
-                  </Link>
-                </div>
+                <EmptyState
+                  icon="📝"
+                  title="Nenhuma review ainda"
+                  message="Você ainda não avaliou nenhum jogo. Explore o catálogo e compartilhe suas opiniões!"
+                  actionLabel="Explorar Jogos"
+                  onAction={() => (window.location.href = "/games")}
+                />
               ) : (
                 reviews.map((review) => (
                   <div
@@ -242,17 +254,13 @@ export default function Profile() {
           {activeTab === "liked" && (
             <div>
               {likedGames.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-gray-600 mb-4">
-                    Você ainda não curtiu nenhum jogo
-                  </p>
-                  <Link
-                    to="/games"
-                    className="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-                  >
-                    Explorar Jogos
-                  </Link>
-                </div>
+                <EmptyState
+                  icon="❤️"
+                  title="Nenhum jogo curtido"
+                  message="Explore o catálogo e curta seus jogos favoritos para mantê-los aqui!"
+                  actionLabel="Explorar Jogos"
+                  onAction={() => (window.location.href = "/games")}
+                />
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {likedGames.map((game) => (

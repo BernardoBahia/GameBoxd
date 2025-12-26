@@ -4,7 +4,12 @@ import { gameService, reviewService } from "../services";
 import type { GameDetails, Review } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
-import { Navbar, LoadingSpinner } from "../components";
+import {
+  Navbar,
+  SkeletonReviewCard,
+  EmptyState,
+  Skeleton,
+} from "../components";
 
 export default function GameDetail() {
   const { id } = useParams<{ id: string }>();
@@ -95,7 +100,28 @@ export default function GameDetail() {
   };
 
   if (loading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1">
+              <Skeleton className="w-full h-96 mb-4" />
+              <Skeleton className="h-8 w-3/4 mb-2" />
+              <Skeleton className="h-6 w-1/2 mb-4" />
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+            <div className="lg:col-span-2 space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <SkeletonReviewCard key={i} />
+              ))}
+            </div>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   if (error || !game) {
@@ -113,7 +139,7 @@ export default function GameDetail() {
       <Navbar />
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Game Info */}
           <div className="lg:col-span-1">
@@ -269,9 +295,13 @@ export default function GameDetail() {
               </div>
 
               {reviews.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  Nenhuma review ainda. Seja o primeiro a avaliar!
-                </div>
+                <EmptyState
+                  icon="📝"
+                  title="Nenhuma review ainda"
+                  message="Seja o primeiro a avaliar este jogo e compartilhar sua opinião!"
+                  actionLabel={user ? "Escrever Review" : undefined}
+                  onAction={user ? () => setShowReviewForm(true) : undefined}
+                />
               )}
             </div>
           </div>
