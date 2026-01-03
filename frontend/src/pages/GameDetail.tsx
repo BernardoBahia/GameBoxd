@@ -9,6 +9,7 @@ import {
   SkeletonReviewCard,
   EmptyState,
   Skeleton,
+  AddToListModal,
 } from "../components";
 
 export default function GameDetail() {
@@ -28,6 +29,9 @@ export default function GameDetail() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewContent, setReviewContent] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
+
+  // Add to list modal
+  const [showAddToListModal, setShowAddToListModal] = useState(false);
 
   useEffect(() => {
     fetchGameData();
@@ -191,6 +195,19 @@ export default function GameDetail() {
               </div>
             )}
 
+            {/* Add to List Button */}
+            {user && (
+              <div className="mb-6">
+                <button
+                  onClick={() => setShowAddToListModal(true)}
+                  className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                >
+                  <span className="text-xl">➕</span>
+                  Adicionar à Lista
+                </button>
+              </div>
+            )}
+
             {/* Reviews Section */}
             <div className="mt-8">
               <div className="flex justify-between items-center mb-4">
@@ -309,6 +326,16 @@ export default function GameDetail() {
           </div>
         </div>
       </main>
+
+      {/* Add to List Modal */}
+      {game && (
+        <AddToListModal
+          gameId={gameId}
+          gameName={game.name}
+          isOpen={showAddToListModal}
+          onClose={() => setShowAddToListModal(false)}
+        />
+      )}
     </div>
   );
 }

@@ -48,10 +48,11 @@ export default function MyLists() {
   const fetchListGames = async (listId: string) => {
     try {
       setLoadingGames(true);
-      await listService.getListById(listId, user!.id);
-      // Assumindo que a API retorna os jogos na lista
-      // Por ora, vamos apenas mostrar IDs (você pode melhorar buscando detalhes)
-      setListGames([]);
+      const listWithGames = await listService.getListById(listId, user!.id);
+
+      // Extrai os jogos da lista (listGames contém {game: {...}})
+      const games = listWithGames.listGames?.map((lg: any) => lg.game) || [];
+      setListGames(games);
     } catch (err) {
       showToast("Erro ao carregar jogos da lista", "error");
     } finally {
@@ -147,6 +148,19 @@ export default function MyLists() {
     fetchListGames(list.id);
   };
 
+  const handleRemoveGame = async (gameId: string) => {
+    if (!selectedList || !user) return;
+    if (!confirm("Deseja remover este jogo da lista?")) return;
+
+    try {
+      await listService.removeGameFromList(selectedList.id, user.id, gameId);
+      setListGames(listGames.filter((g) => g.id.toString() !== gameId));
+      showToast("Jogo removido da lista!", "success");
+    } catch (err) {
+      showToast("Erro ao remover jogo da lista", "error");
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -209,18 +223,20 @@ export default function MyLists() {
         {/* Create List Modal */}
         {showCreateForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h2 className="text-2xl font-bold mb-4">Criar Nova Lista</h2>
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+              <h2 className="text-2xl font-bold mb-4 dark:text-white">
+                Criar Nova Lista
+              </h2>
               <form onSubmit={handleCreateList}>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-medium mb-2 dark:text-gray-200">
                     Nome da Lista
                   </label>
                   <input
                     type="text"
                     value={newListName}
                     onChange={(e) => setNewListName(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
                     placeholder="Ex: Meus jogos favoritos"
                     required
                   />
@@ -233,7 +249,9 @@ export default function MyLists() {
                       onChange={(e) => setNewListIsPublic(e.target.checked)}
                       className="w-4 h-4"
                     />
-                    <span className="text-sm">Lista pública</span>
+                    <span className="text-sm dark:text-gray-200">
+                      Lista pública
+                    </span>
                   </label>
                 </div>
                 <div className="flex gap-2">
@@ -251,7 +269,7 @@ export default function MyLists() {
                       setNewListName("");
                       setNewListIsPublic(false);
                     }}
-                    className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
+                    className="flex-1 px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition"
                   >
                     Cancelar
                   </button>
@@ -277,7 +295,7 @@ export default function MyLists() {
               {lists.map((list) => (
                 <div
                   key={list.id}
-                  className={`bg-white rounded-lg shadow p-4 cursor-pointer transition ${
+                  className={`bg-white dark:bg-gray-800 rounded-lg shadow p-4 cursor-pointer transition ${
                     selectedList?.id === list.id
                       ? "ring-2 ring-indigo-600"
                       : "hover:shadow-lg"
@@ -293,7 +311,7 @@ export default function MyLists() {
                         type="text"
                         value={editListName}
                         onChange={(e) => setEditListName(e.target.value)}
-                        className="flex-1 px-2 py-1 border rounded"
+                        className="flex-1 px-2 py-1 border dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white"
                         autoFocus
                       />
                       <button
@@ -307,7 +325,7 @@ export default function MyLists() {
                           setEditingListId(null);
                           setEditListName("");
                         }}
-                        className="px-2 py-1 bg-gray-300 rounded text-sm"
+                        className="px-2 py-1 bg-gray-300 dark:bg-gray-600 rounded text-sm"
                       >
                         ✗
                       </button>
@@ -315,12 +333,14 @@ export default function MyLists() {
                   ) : (
                     <>
                       <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-bold text-lg">{list.name}</h3>
+                        <h3 className="font-bold text-lg dark:text-white">
+                          {list.name}
+                        </h3>
                         <span
                           className={`text-xs px-2 py-1 rounded ${
                             list.isPublic
-                              ? "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-700"
+                              ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                              : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
                           }`}
                         >
                           {list.isPublic ? "Pública" : "Privada"}
@@ -335,7 +355,7 @@ export default function MyLists() {
                             setEditingListId(list.id);
                             setEditListName(list.name);
                           }}
-                          className="text-indigo-600 hover:text-indigo-800"
+                          className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300"
                         >
                           Renomear
                         </button>
@@ -343,13 +363,13 @@ export default function MyLists() {
                           onClick={() =>
                             handleTogglePublic(list.id, list.isPublic)
                           }
-                          className="text-gray-600 hover:text-gray-800"
+                          className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300"
                         >
                           {list.isPublic ? "Tornar Privada" : "Tornar Pública"}
                         </button>
                         <button
                           onClick={() => handleDeleteList(list.id)}
-                          className="text-red-600 hover:text-red-800"
+                          className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                         >
                           Deletar
                         </button>
@@ -363,8 +383,8 @@ export default function MyLists() {
             {/* List Details */}
             <div className="lg:col-span-2">
               {selectedList ? (
-                <div className="bg-white rounded-lg shadow p-6">
-                  <h2 className="text-2xl font-bold mb-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                  <h2 className="text-2xl font-bold mb-6 dark:text-white">
                     {selectedList.name}
                   </h2>
 
@@ -383,29 +403,37 @@ export default function MyLists() {
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                       {listGames.map((game) => (
-                        <Link
-                          key={game.id}
-                          to={`/games/${game.id}`}
-                          className="group"
-                        >
-                          <img
-                            src={
-                              game.background_image || "/placeholder-game.jpg"
-                            }
-                            alt={game.name}
-                            className="w-full h-40 object-cover rounded-lg shadow group-hover:shadow-lg transition"
-                          />
-                          <h3 className="mt-2 font-semibold text-sm group-hover:text-indigo-600 transition">
-                            {game.name}
-                          </h3>
-                        </Link>
+                        <div key={game.id} className="relative group">
+                          <Link to={`/games/${game.id}`} className="block">
+                            <img
+                              src={
+                                game.background_image || "/placeholder-game.jpg"
+                              }
+                              alt={game.name}
+                              className="w-full h-40 object-cover rounded-lg shadow group-hover:shadow-lg transition"
+                            />
+                            <h3 className="mt-2 font-semibold text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 dark:text-gray-200 transition">
+                              {game.name}
+                            </h3>
+                          </Link>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleRemoveGame(game.id.toString());
+                            }}
+                            className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg transition opacity-0 group-hover:opacity-100"
+                            title="Remover da lista"
+                          >
+                            ✕
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="bg-white rounded-lg shadow p-12 text-center">
-                  <p className="text-gray-600">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-12 text-center">
+                  <p className="text-gray-600 dark:text-gray-400">
                     Selecione uma lista para ver seus jogos
                   </p>
                 </div>

@@ -8,3 +8,4 @@ export { default as Skeleton } from "./Skeleton";
 export { default as SkeletonGameCard } from "./SkeletonGameCard";
 export { default as SkeletonReviewCard } from "./SkeletonReviewCard";
 export { default as EmptyState } from "./EmptyState";
+export { default as AddToListModal } from "./AddToListModal";
