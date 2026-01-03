@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { gameService } from "../services";
 import type { GameSummary } from "../types";
 import { Navbar, GameCard, SkeletonGameCard, EmptyState } from "../components";
@@ -6,24 +6,52 @@ import { Navbar, GameCard, SkeletonGameCard, EmptyState } from "../components";
 export default function Games() {
   const [games, setGames] = useState<GameSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
   const gamesPerPage = 20;
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchGames();
-  }, [currentPage]);
+  }, []);
 
-  const fetchGames = async () => {
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+          loadMoreGames();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, currentPage]);
+
+  const fetchGames = async (reset = false) => {
     try {
       setLoading(true);
       setError("");
-      const data = await gameService.getGames(currentPage, gamesPerPage);
-      setGames(data);
-      // Por enquanto sem paginação total
-      setTotalPages(1);
+      const page = reset ? 1 : currentPage;
+      const data = await gameService.getGames(page, gamesPerPage);
+
+      if (reset) {
+        setGames(data.results);
+        setCurrentPage(1);
+      } else {
+        setGames(data.results);
+      }
+
+      setTotalCount(data.count);
+      setHasMore(!!data.next);
     } catch (err) {
       setError("Erro ao carregar jogos");
       console.error(err);
@@ -32,10 +60,30 @@ export default function Games() {
     }
   };
 
+  const loadMoreGames = async () => {
+    if (!hasMore || loadingMore) return;
+
+    try {
+      setLoadingMore(true);
+      const nextPage = currentPage + 1;
+      const data = await gameService.getGames(nextPage, gamesPerPage);
+
+      setGames((prev) => [...prev, ...data.results]);
+      setCurrentPage(nextPage);
+      setHasMore(!!data.next);
+    } catch (err) {
+      console.error("Erro ao carregar mais jogos:", err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) {
-      fetchGames();
+      setSearchQuery("");
+      setCurrentPage(1);
+      fetchGames(true);
       return;
     }
 
@@ -43,8 +91,9 @@ export default function Games() {
       setLoading(true);
       setError("");
       const data = await gameService.searchGames(searchQuery, 1, gamesPerPage);
-      setGames(data);
-      setTotalPages(1);
+      setGames(data.results);
+      setTotalCount(data.count);
+      setHasMore(!!data.next);
       setCurrentPage(1);
     } catch (err) {
       setError("Erro ao buscar jogos");
@@ -56,8 +105,6 @@ export default function Games() {
 
   const handleLike = async (gameId: number) => {
     try {
-      // Note: gameService.likeGame precisa de userId e gameId
-      // Por ora vamos apenas fazer console.log
       console.log("Like game:", gameId);
       alert("Funcionalidade de curtir em desenvolvimento");
     } catch (err) {
@@ -107,11 +154,47 @@ export default function Games() {
             ))}
           </div>
         ) : games.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {games.map((game) => (
-              <GameCard key={game.id} game={game} onLike={handleLike} />
-            ))}
-          </div>
+          <>
+            <div className="mb-4 text-center text-gray-600 dark:text-gray-400">
+              Mostrando {games.length} de {totalCount} jogos
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {games.map((game) => (
+                <GameCard key={game.id} game={game} onLike={handleLike} />
+              ))}
+            </div>
+
+            {/* Loading More Indicator */}
+            {loadingMore && (
+              <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <SkeletonGameCard key={`loading-${i}`} />
+                ))}
+              </div>
+            )}
+
+            {/* Intersection Observer Target */}
+            <div ref={observerTarget} className="h-10" />
+
+            {/* Load More Button (fallback) */}
+            {hasMore && !loadingMore && (
+              <div className="mt-8 text-center">
+                <button
+                  onClick={loadMoreGames}
+                  className="px-8 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
+                >
+                  Carregar Mais Jogos
+                </button>
+              </div>
+            )}
+
+            {/* End of results */}
+            {!hasMore && games.length > 0 && (
+              <div className="mt-8 text-center text-gray-600 dark:text-gray-400 py-4">
+                Você chegou ao fim da lista! 🎮
+              </div>
+            )}
+          </>
         ) : (
           <EmptyState
             icon="🎮"
@@ -122,31 +205,6 @@ export default function Games() {
                 : "Ainda não há jogos cadastrados."
             }
           />
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-8 flex justify-center items-center gap-2">
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md"
-            >
-              Anterior
-            </button>
-            <span className="px-4 py-2 text-gray-700">
-              Página {currentPage} de {totalPages}
-            </span>
-            <button
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={currentPage === totalPages}
-              className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm hover:shadow-md"
-            >
-              Próxima
-            </button>
-          </div>
         )}
       </main>
     </div>

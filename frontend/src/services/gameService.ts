@@ -6,8 +6,18 @@ import type {
   UserGameStatus,
 } from "../types";
 
+interface PaginatedResponse<T> {
+  results: T[];
+  count: number;
+  next: string | null;
+  previous: string | null;
+}
+
 export const gameService = {
-  async getGames(page = 1, pageSize = 10): Promise<GameSummary[]> {
+  async getGames(
+    page = 1,
+    pageSize = 10
+  ): Promise<PaginatedResponse<GameSummary>> {
     const response = await api.get("/games", {
       params: { page, pageSize },
     });
@@ -18,7 +28,7 @@ export const gameService = {
     query: string,
     page = 1,
     pageSize = 10
-  ): Promise<GameDetails[]> {
+  ): Promise<PaginatedResponse<GameDetails>> {
     const response = await api.get("/games/search", {
       params: { query, page, pageSize },
     });

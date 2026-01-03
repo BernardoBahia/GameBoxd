@@ -39,20 +39,33 @@ export class GameService {
     throw new Error(message);
   }
 
-  getGames = async (page = 1, pageSize = 10): Promise<GameSummary[]> => {
+  getGames = async (
+    page = 1,
+    pageSize = 10
+  ): Promise<{
+    results: GameSummary[];
+    count: number;
+    next: string | null;
+    previous: string | null;
+  }> => {
     try {
       const response = await rawgApi.get<RawgListResponse>("/games", {
         params: { page, page_size: pageSize },
       });
 
-      return response.data.results.map(
-        (game): GameSummary => ({
-          id: game.id,
-          name: game.name,
-          released: game.released,
-          background_image: game.background_image,
-        })
-      );
+      return {
+        results: response.data.results.map(
+          (game): GameSummary => ({
+            id: game.id,
+            name: game.name,
+            released: game.released,
+            background_image: game.background_image,
+          })
+        ),
+        count: response.data.count,
+        next: response.data.next,
+        previous: response.data.previous,
+      };
     } catch (error) {
       this.handleError("Erro ao obter jogos", error);
     }
@@ -62,7 +75,12 @@ export class GameService {
     query: string,
     page = 1,
     pageSize = 10
-  ): Promise<GameDetails[]> => {
+  ): Promise<{
+    results: GameDetails[];
+    count: number;
+    next: string | null;
+    previous: string | null;
+  }> => {
     try {
       const response = await rawgApi.get<RawgListResponse>("/games", {
         params: { search: query, page, page_size: pageSize },
@@ -81,7 +99,12 @@ export class GameService {
         })
       );
 
-      return detailedGames;
+      return {
+        results: detailedGames,
+        count: response.data.count,
+        next: response.data.next,
+        previous: response.data.previous,
+      };
     } catch (error) {
       this.handleError("Erro ao buscar jogos", error);
     }
