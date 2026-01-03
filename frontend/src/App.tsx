@@ -10,6 +10,7 @@ import Games from "./pages/Games";
 import GameDetail from "./pages/GameDetail";
 import Profile from "./pages/Profile";
 import MyLists from "./pages/MyLists";
+import MyGames from "./pages/MyGames";
 import NotFound from "./pages/NotFound";
 
 function App() {
@@ -38,6 +39,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <MyLists />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/my-games"
+                element={
+                  <ProtectedRoute>
+                    <MyGames />
                   </ProtectedRoute>
                 }
               />

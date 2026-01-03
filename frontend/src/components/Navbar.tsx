@@ -28,6 +28,12 @@ export default function Navbar() {
             {user ? (
               <>
                 <Link
+                  to="/my-games"
+                  className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition"
+                >
+                  Meus Jogos
+                </Link>
+                <Link
                   to="/my-lists"
                   className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition"
                 >

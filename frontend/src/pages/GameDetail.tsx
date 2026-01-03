@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router";
 import { gameService, reviewService } from "../services";
-import type { GameDetails, Review } from "../types";
+import type { GameDetails, Review, GameStatusType } from "../types";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import {
@@ -33,9 +33,18 @@ export default function GameDetail() {
   // Add to list modal
   const [showAddToListModal, setShowAddToListModal] = useState(false);
 
+  // Game status
+  const [currentStatus, setCurrentStatus] = useState<GameStatusType | null>(
+    null
+  );
+  const [settingStatus, setSettingStatus] = useState(false);
+
   useEffect(() => {
     fetchGameData();
-  }, [gameId]);
+    if (user) {
+      fetchGameStatus();
+    }
+  }, [gameId, user]);
 
   const fetchGameData = async () => {
     try {
@@ -58,6 +67,72 @@ export default function GameDetail() {
       showToast("Erro ao carregar dados do jogo", "error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchGameStatus = async () => {
+    if (!user) return;
+
+    try {
+      const statuses = await gameService.getUserGamesByStatus(user.id);
+      const gameStatus = statuses.find((s: any) => s.game.gameId === gameId);
+      if (gameStatus) {
+        setCurrentStatus(gameStatus.status);
+      }
+    } catch (err) {
+      // Ignorar erro se não houver status
+    }
+  };
+
+  const handleSetStatus = async (status: GameStatusType) => {
+    if (!user) return;
+
+    try {
+      setSettingStatus(true);
+      await gameService.setGameStatus(user.id, gameId, status);
+      setCurrentStatus(status);
+      showToast(`Jogo marcado como: ${getStatusLabel(status)}`, "success");
+    } catch (err) {
+      showToast("Erro ao atualizar status", "error");
+    } finally {
+      setSettingStatus(false);
+    }
+  };
+
+  const handleRemoveStatus = async () => {
+    if (!user) return;
+
+    try {
+      setSettingStatus(true);
+      await gameService.removeGameStatus(user.id, gameId);
+      setCurrentStatus(null);
+      showToast("Status removido", "success");
+    } catch (err) {
+      showToast("Erro ao remover status", "error");
+    } finally {
+      setSettingStatus(false);
+    }
+  };
+
+  const getStatusLabel = (status: GameStatusType) => {
+    switch (status) {
+      case "PLAYING":
+        return "Jogando";
+      case "COMPLETED":
+        return "Completado";
+      case "WANT_TO_PLAY":
+        return "Quero Jogar";
+    }
+  };
+
+  const getStatusEmoji = (status: GameStatusType) => {
+    switch (status) {
+      case "PLAYING":
+        return "🎮";
+      case "COMPLETED":
+        return "✅";
+      case "WANT_TO_PLAY":
+        return "📌";
     }
   };
 
@@ -251,6 +326,72 @@ export default function GameDetail() {
                     </span>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Game Status Buttons */}
+            {user && (
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">
+                  Meu Status
+                </h3>
+                {currentStatus && (
+                  <div className="mb-3 flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                    <span className="text-2xl">
+                      {getStatusEmoji(currentStatus)}
+                    </span>
+                    <span className="font-semibold">
+                      {getStatusLabel(currentStatus)}
+                    </span>
+                  </div>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <button
+                    onClick={() => handleSetStatus("PLAYING")}
+                    disabled={settingStatus || currentStatus === "PLAYING"}
+                    className={`px-4 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
+                      currentStatus === "PLAYING"
+                        ? "bg-blue-600 text-white"
+                        : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-2 border-blue-600 dark:border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-700"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <span className="text-xl">🎮</span>
+                    Jogando
+                  </button>
+                  <button
+                    onClick={() => handleSetStatus("COMPLETED")}
+                    disabled={settingStatus || currentStatus === "COMPLETED"}
+                    className={`px-4 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
+                      currentStatus === "COMPLETED"
+                        ? "bg-green-600 text-white"
+                        : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-2 border-green-600 dark:border-green-500 hover:bg-green-50 dark:hover:bg-gray-700"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <span className="text-xl">✅</span>
+                    Completado
+                  </button>
+                  <button
+                    onClick={() => handleSetStatus("WANT_TO_PLAY")}
+                    disabled={settingStatus || currentStatus === "WANT_TO_PLAY"}
+                    className={`px-4 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
+                      currentStatus === "WANT_TO_PLAY"
+                        ? "bg-purple-600 text-white"
+                        : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-2 border-purple-600 dark:border-purple-500 hover:bg-purple-50 dark:hover:bg-gray-700"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <span className="text-xl">📌</span>
+                    Quero Jogar
+                  </button>
+                </div>
+                {currentStatus && (
+                  <button
+                    onClick={handleRemoveStatus}
+                    disabled={settingStatus}
+                    className="mt-3 w-full px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition disabled:opacity-50"
+                  >
+                    Remover Status
+                  </button>
+                )}
               </div>
             )}
 
