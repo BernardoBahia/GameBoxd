@@ -11,6 +11,7 @@ import GameDetail from "./pages/GameDetail";
 import Profile from "./pages/Profile";
 import MyLists from "./pages/MyLists";
 import MyGames from "./pages/MyGames";
+import Favorites from "./pages/Favorites";
 import NotFound from "./pages/NotFound";
 
 function App() {
@@ -47,6 +48,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <MyGames />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/favorites"
+                element={
+                  <ProtectedRoute>
+                    <Favorites />
                   </ProtectedRoute>
                 }
               />

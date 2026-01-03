@@ -39,10 +39,15 @@ export default function GameDetail() {
   );
   const [settingStatus, setSettingStatus] = useState(false);
 
+  // Like/Favorite
+  const [isLiked, setIsLiked] = useState(false);
+  const [likingGame, setLikingGame] = useState(false);
+
   useEffect(() => {
     fetchGameData();
     if (user) {
       fetchGameStatus();
+      fetchLikeStatus();
     }
   }, [gameId, user]);
 
@@ -81,6 +86,43 @@ export default function GameDetail() {
       }
     } catch (err) {
       // Ignorar erro se não houver status
+    }
+  };
+
+  const fetchLikeStatus = async () => {
+    if (!user) return;
+
+    try {
+      const likedGames = await gameService.getUserLikedGames(user.id);
+      const isGameLiked = likedGames.some(
+        (lg: any) => lg.game.gameId === gameId
+      );
+      setIsLiked(isGameLiked);
+    } catch (err) {
+      // Ignorar erro se não houver jogos curtidos
+    }
+  };
+
+  const handleToggleLike = async () => {
+    if (!user) {
+      showToast("Faça login para curtir jogos", "error");
+      return;
+    }
+
+    try {
+      setLikingGame(true);
+      const result = await gameService.likeGame(user.id, gameId);
+      setIsLiked(result.liked);
+      showToast(
+        result.liked
+          ? "Jogo adicionado aos favoritos! ❤️"
+          : "Jogo removido dos favoritos",
+        "success"
+      );
+    } catch (err) {
+      showToast("Erro ao curtir jogo", "error");
+    } finally {
+      setLikingGame(false);
     }
   };
 
@@ -231,9 +273,30 @@ export default function GameDetail() {
 
           {/* Game Details & Reviews */}
           <div className="lg:col-span-2">
-            <h1 className="text-4xl font-bold mb-2 text-gray-900 dark:text-white">
-              {game.name}
-            </h1>
+            <div className="flex justify-between items-start mb-2">
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
+                {game.name}
+              </h1>
+              {user && (
+                <button
+                  onClick={handleToggleLike}
+                  disabled={likingGame}
+                  className={`px-4 py-2 rounded-lg font-semibold transition transform hover:scale-105 disabled:opacity-50 flex items-center gap-2 ${
+                    isLiked
+                      ? "bg-red-500 text-white hover:bg-red-600"
+                      : "bg-white dark:bg-gray-800 text-red-500 dark:text-red-400 border-2 border-red-500 dark:border-red-400 hover:bg-red-50 dark:hover:bg-gray-700"
+                  }`}
+                  title={
+                    isLiked
+                      ? "Remover dos favoritos"
+                      : "Adicionar aos favoritos"
+                  }
+                >
+                  <span className="text-xl">{isLiked ? "❤️" : "🤍"}</span>
+                  {isLiked ? "Favoritado" : "Favoritar"}
+                </button>
+              )}
+            </div>
             <div className="flex items-center gap-6 mb-6">
               <span className="text-lg text-gray-600 dark:text-gray-400">
                 {new Date(game.released).getFullYear()}
