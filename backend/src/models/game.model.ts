@@ -14,6 +14,8 @@ export interface GameSummary {
   name: string;
   released: string;
   background_image: string;
+  rating?: number;
+  metacritic?: number;
 }
 
 export interface GameDetails {
@@ -21,6 +23,8 @@ export interface GameDetails {
   name: string;
   released: string;
   background_image: string;
+  rating?: number;
+  metacritic?: number;
   genres: string[];
   developers: string[];
   publishers: string[];
@@ -33,6 +37,8 @@ export interface RawgGame {
   name: string;
   released: string;
   background_image: string;
+  rating?: number;
+  metacritic?: number;
   genres?: { name: string }[];
   developers?: { name: string }[];
   publishers?: { name: string }[];
@@ -42,4 +48,7 @@ export interface RawgGame {
 
 export interface RawgListResponse {
   results: RawgGame[];
+  count: number;
+  next: string | null;
+  previous: string | null;
 }

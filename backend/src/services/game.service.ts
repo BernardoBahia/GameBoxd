@@ -21,6 +21,8 @@ export class GameService {
       name: game.name,
       released: game.released,
       background_image: game.background_image,
+      rating: game.rating,
+      metacritic: game.metacritic,
       genres: game.genres?.map((g) => g.name) || [],
       developers: game.developers?.map((d) => d.name) || [],
       publishers: game.publishers?.map((p) => p.name) || [],
@@ -60,6 +62,8 @@ export class GameService {
             name: game.name,
             released: game.released,
             background_image: game.background_image,
+            rating: game.rating,
+            metacritic: game.metacritic,
           })
         ),
         count: response.data.count,
@@ -68,6 +72,100 @@ export class GameService {
       };
     } catch (error) {
       this.handleError("Erro ao obter jogos", error);
+    }
+  };
+
+  getTrendingGames = async (
+    page = 1,
+    pageSize = 10
+  ): Promise<{
+    results: GameSummary[];
+    count: number;
+    next: string | null;
+    previous: string | null;
+  }> => {
+    try {
+      // Buscar jogos dos últimos 60 dias mais jogados/populares
+      const currentDate = new Date();
+      const twoMonthsAgo = new Date();
+      twoMonthsAgo.setDate(currentDate.getDate() - 60);
+
+      const dates = `${twoMonthsAgo.toISOString().split("T")[0]},${
+        currentDate.toISOString().split("T")[0]
+      }`;
+
+      const response = await rawgApi.get<RawgListResponse>("/games", {
+        params: {
+          page,
+          page_size: pageSize,
+          dates,
+          ordering: "-added",
+        },
+      });
+
+      return {
+        results: response.data.results.map(
+          (game): GameSummary => ({
+            id: game.id,
+            name: game.name,
+            released: game.released,
+            background_image: game.background_image,
+            rating: game.rating,
+            metacritic: game.metacritic,
+          })
+        ),
+        count: response.data.count,
+        next: response.data.next,
+        previous: response.data.previous,
+      };
+    } catch (error) {
+      this.handleError("Erro ao obter jogos em alta", error);
+    }
+  };
+
+  getRecentGames = async (
+    page = 1,
+    pageSize = 10
+  ): Promise<{
+    results: GameSummary[];
+    count: number;
+    next: string | null;
+    previous: string | null;
+  }> => {
+    try {
+      const currentDate = new Date();
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(currentDate.getMonth() - 3);
+
+      const dates = `${threeMonthsAgo.toISOString().split("T")[0]},${
+        currentDate.toISOString().split("T")[0]
+      }`;
+
+      const response = await rawgApi.get<RawgListResponse>("/games", {
+        params: {
+          page,
+          page_size: pageSize,
+          dates,
+          ordering: "-rating,-added",
+        },
+      });
+
+      return {
+        results: response.data.results.map(
+          (game): GameSummary => ({
+            id: game.id,
+            name: game.name,
+            released: game.released,
+            background_image: game.background_image,
+            rating: game.rating,
+          })
+        ),
+        count: response.data.count,
+        next: response.data.next,
+        previous: response.data.previous,
+      };
+    } catch (error) {
+      this.handleError("Erro ao obter jogos recentes", error);
     }
   };
 

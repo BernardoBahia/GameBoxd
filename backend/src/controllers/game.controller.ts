@@ -17,6 +17,32 @@ export const GameController = {
     }
   },
 
+  getTrendingGames: async (req: Request, res: Response) => {
+    try {
+      const page = Number(req.query.page) || 1;
+      const pageSize = Number(req.query.pageSize) || 10;
+      const games = await gameService.getTrendingGames(page, pageSize);
+
+      res.status(200).json(games);
+    } catch (error) {
+      console.error("Erro ao buscar jogos em alta:", error);
+      res.status(500).json({ error: "Erro ao buscar jogos em alta" });
+    }
+  },
+
+  getRecentGames: async (req: Request, res: Response) => {
+    try {
+      const page = Number(req.query.page) || 1;
+      const pageSize = Number(req.query.pageSize) || 10;
+      const games = await gameService.getRecentGames(page, pageSize);
+
+      res.status(200).json(games);
+    } catch (error) {
+      console.error("Erro ao buscar jogos recentes:", error);
+      res.status(500).json({ error: "Erro ao buscar jogos recentes" });
+    }
+  },
+
   searchGames: async (req: Request, res: Response) => {
     try {
       const query = String(req.query.query || "");

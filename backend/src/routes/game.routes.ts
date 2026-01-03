@@ -4,6 +4,8 @@ import { GameController } from "../controllers/game.controller";
 const router = Router();
 
 router.get("/games", GameController.getGames);
+router.get("/games/trending", GameController.getTrendingGames);
+router.get("/games/recent", GameController.getRecentGames);
 router.get("/games/search", GameController.searchGames);
 router.get("/games/platform/:platformId", GameController.searchGamesByPlatform);
 router.get("/games/genre/:genreId", GameController.searchGamesByGenre);

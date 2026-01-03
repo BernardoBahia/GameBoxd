@@ -24,6 +24,26 @@ export const gameService = {
     return response.data;
   },
 
+  async getTrendingGames(
+    page = 1,
+    pageSize = 10
+  ): Promise<PaginatedResponse<GameSummary>> {
+    const response = await api.get("/games/trending", {
+      params: { page, pageSize },
+    });
+    return response.data;
+  },
+
+  async getRecentGames(
+    page = 1,
+    pageSize = 10
+  ): Promise<PaginatedResponse<GameSummary>> {
+    const response = await api.get("/games/recent", {
+      params: { page, pageSize },
+    });
+    return response.data;
+  },
+
   async searchGames(
     query: string,
     page = 1,

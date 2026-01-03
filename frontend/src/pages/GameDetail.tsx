@@ -159,37 +159,121 @@ export default function GameDetail() {
             <h1 className="text-4xl font-bold mb-2 text-gray-900 dark:text-white">
               {game.name}
             </h1>
-            <div className="flex items-center gap-4 mb-6">
-              <span className="text-lg text-gray-600">
+            <div className="flex items-center gap-6 mb-6">
+              <span className="text-lg text-gray-600 dark:text-gray-400">
                 {new Date(game.released).getFullYear()}
               </span>
-              <span className="text-2xl font-bold text-yellow-500">
-                ⭐ {avgRating.toFixed(1)}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-yellow-500 text-xl">⭐</span>
+                <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {game.rating?.toFixed(1) || "N/A"}
+                </span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  RAWG
+                </span>
+              </div>
+              {game.metacritic && (
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-1 bg-green-600 text-white font-bold rounded">
+                    {game.metacritic}
+                  </span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    Metacritic
+                  </span>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <span className="text-yellow-500 text-xl">⭐</span>
+                <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {avgRating.toFixed(1)}
+                </span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  Comunidade
+                </span>
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-2 mb-8">
               {game.genres.map((genre, index) => (
                 <span
                   key={index}
-                  className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full"
+                  className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded-full"
                 >
                   {genre}
                 </span>
               ))}
             </div>
 
+            {/* Game Details Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
+              {game.developers && game.developers.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">
+                    Desenvolvedores
+                  </h3>
+                  <p className="text-gray-900 dark:text-white">
+                    {game.developers.join(", ")}
+                  </p>
+                </div>
+              )}
+              {game.publishers && game.publishers.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">
+                    Publicadoras
+                  </h3>
+                  <p className="text-gray-900 dark:text-white">
+                    {game.publishers.join(", ")}
+                  </p>
+                </div>
+              )}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">
+                  Data de Lançamento
+                </h3>
+                <p className="text-gray-900 dark:text-white">
+                  {new Date(game.released).toLocaleDateString("pt-BR")}
+                </p>
+              </div>
+            </div>
+
             {game.platforms && game.platforms.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-2">Plataformas</h3>
+                <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">
+                  Plataformas Disponíveis
+                </h3>
                 <div className="flex flex-wrap gap-2">
                   {game.platforms.map((platform, index) => (
                     <span
                       key={index}
-                      className="px-3 py-1 bg-gray-200 text-gray-700 rounded"
+                      className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded"
                     >
                       {platform}
                     </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* DLCs Section */}
+            {game.dlcs && game.dlcs.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+                  DLCs Disponíveis ({game.dlcs.length})
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {game.dlcs.map((dlc) => (
+                    <div
+                      key={dlc.id}
+                      className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow hover:shadow-lg transition border border-gray-200 dark:border-gray-700"
+                    >
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
+                        {dlc.name}
+                      </h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Lançamento:{" "}
+                        {new Date(dlc.released).toLocaleDateString("pt-BR")}
+                      </p>
+                    </div>
                   ))}
                 </div>
               </div>
