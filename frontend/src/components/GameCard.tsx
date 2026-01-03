@@ -8,7 +8,7 @@ interface GameCardProps {
 
 export default function GameCard({ game, onLike }: GameCardProps) {
   return (
-    <div className="bg-white rounded-lg shadow hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:scale-105">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-xl dark:shadow-gray-700 transition-all duration-300 overflow-hidden transform hover:scale-105">
       <Link to={`/games/${game.id}`}>
         <img
           src={game.background_image || "/placeholder-game.jpg"}
@@ -18,7 +18,7 @@ export default function GameCard({ game, onLike }: GameCardProps) {
       </Link>
       <div className="p-4">
         <Link to={`/games/${game.id}`}>
-          <h3 className="font-bold text-lg mb-2 hover:text-indigo-600 transition">
+          <h3 className="font-bold text-lg mb-2 hover:text-indigo-600 dark:hover:text-indigo-400 transition text-gray-900 dark:text-white">
             {game.name}
           </h3>
         </Link>

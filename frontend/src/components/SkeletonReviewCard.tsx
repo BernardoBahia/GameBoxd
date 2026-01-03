@@ -2,7 +2,7 @@ import Skeleton from "./Skeleton";
 
 export default function SkeletonReviewCard() {
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3 flex-1">
           {/* Avatar skeleton */}

@@ -2,7 +2,7 @@ import Skeleton from "./Skeleton";
 
 export default function SkeletonGameCard() {
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
       {/* Image skeleton */}
       <Skeleton className="w-full h-64" />
 

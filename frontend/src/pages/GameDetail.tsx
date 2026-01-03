@@ -135,7 +135,7 @@ export default function GameDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       <Navbar />
 
       {/* Main Content */}
@@ -152,7 +152,9 @@ export default function GameDetail() {
 
           {/* Game Details & Reviews */}
           <div className="lg:col-span-2">
-            <h1 className="text-4xl font-bold mb-2">{game.name}</h1>
+            <h1 className="text-4xl font-bold mb-2 text-gray-900 dark:text-white">
+              {game.name}
+            </h1>
             <div className="flex items-center gap-4 mb-6">
               <span className="text-lg text-gray-600">
                 {new Date(game.released).getFullYear()}
