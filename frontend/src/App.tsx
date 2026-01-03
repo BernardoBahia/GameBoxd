@@ -10,6 +10,7 @@ import Games from "./pages/Games";
 import GameDetail from "./pages/GameDetail";
 import Profile from "./pages/Profile";
 import MyLists from "./pages/MyLists";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </Router>
         </ToastProvider>
