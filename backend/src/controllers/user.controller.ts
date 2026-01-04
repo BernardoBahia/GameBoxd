@@ -40,4 +40,22 @@ export const UserController = {
     await userService.deleteUser(id);
     res.status(204).send();
   },
+
+  getUserStats: async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const userService = new UserService();
+    const stats = await userService.getUserStats(id);
+    res.status(200).json(stats);
+  },
+
+  getUserWithPublicData: async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const userService = new UserService();
+    const user = await userService.getUserWithPublicData(id);
+    if (user) {
+      res.status(200).json(user);
+    } else {
+      res.status(404).json({ message: "User not found" });
+    }
+  },
 };

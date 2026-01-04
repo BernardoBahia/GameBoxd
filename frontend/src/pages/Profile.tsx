@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
-import { reviewService, gameService } from "../services";
-import type { Review, GameSummary } from "../types";
+import { reviewService, gameService, userService } from "../services";
+import type { Review, GameSummary, UserStats } from "../types";
 import {
   Navbar,
   SkeletonReviewCard,
@@ -16,6 +16,7 @@ export default function Profile() {
   const { showToast } = useToast();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [likedGames, setLikedGames] = useState<GameSummary[]>([]);
+  const [stats, setStats] = useState<UserStats | null>(null);
   const [gamesByStatus, setGamesByStatus] = useState<{
     playing: GameSummary[];
     completed: GameSummary[];
@@ -42,12 +43,15 @@ export default function Profile() {
     try {
       setLoading(true);
 
-      // Buscar reviews do usuário
-      const userReviews = await reviewService.getReviewsByUserId(user.id);
-      setReviews(userReviews);
+      // Buscar estatísticas, reviews e jogos curtidos em paralelo
+      const [userStats, userReviews, liked] = await Promise.all([
+        userService.getUserStats(user.id),
+        reviewService.getReviewsByUserId(user.id),
+        gameService.getUserLikedGames(user.id),
+      ]);
 
-      // Buscar jogos curtidos
-      const liked = await gameService.getUserLikedGames(user.id);
+      setStats(userStats);
+      setReviews(userReviews);
       setLikedGames(liked);
 
       // Buscar jogos por status
@@ -134,43 +138,83 @@ export default function Profile() {
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{user.name}</h1>
-              <p className="text-gray-600">{user.email}</p>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white transition-colors">
+                {user.name}
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 transition-colors">
+                {user.email}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-500 mt-1 transition-colors">
+                Membro desde{" "}
+                {new Date(user.createdAt).toLocaleDateString("pt-BR")}
+              </p>
             </div>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
-            <div className="bg-indigo-50 rounded-lg p-4 text-center">
-              <div className="text-3xl font-bold text-indigo-600">
-                {reviews.length}
+          {stats && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4 mt-6">
+              <div className="bg-indigo-50 dark:bg-indigo-900/30 rounded-lg p-4 text-center transition-colors">
+                <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 transition-colors">
+                  {stats.reviewsCount}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 transition-colors">
+                  Reviews
+                </div>
               </div>
-              <div className="text-sm text-gray-600">Reviews</div>
-            </div>
-            <div className="bg-green-50 rounded-lg p-4 text-center">
-              <div className="text-3xl font-bold text-green-600">
-                {gamesByStatus.completed.length}
+              <div className="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-4 text-center transition-colors">
+                <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 transition-colors">
+                  {stats.listsCount}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 transition-colors">
+                  Listas
+                </div>
               </div>
-              <div className="text-sm text-gray-600">Jogos Completados</div>
-            </div>
-            <div className="bg-red-50 rounded-lg p-4 text-center">
-              <div className="text-3xl font-bold text-red-600">
-                {likedGames.length}
+              <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 text-center transition-colors">
+                <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 transition-colors">
+                  {stats.statusCounts.playing}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 transition-colors">
+                  Jogando
+                </div>
               </div>
-              <div className="text-sm text-gray-600">Jogos Curtidos</div>
+              <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-4 text-center transition-colors">
+                <div className="text-3xl font-bold text-green-600 dark:text-green-400 transition-colors">
+                  {stats.statusCounts.completed}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 transition-colors">
+                  Completados
+                </div>
+              </div>
+              <div className="bg-amber-50 dark:bg-amber-900/30 rounded-lg p-4 text-center transition-colors">
+                <div className="text-3xl font-bold text-amber-600 dark:text-amber-400 transition-colors">
+                  {stats.statusCounts.wantToPlay}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 transition-colors">
+                  Quero Jogar
+                </div>
+              </div>
+              <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-4 text-center transition-colors">
+                <div className="text-3xl font-bold text-red-600 dark:text-red-400 transition-colors">
+                  {stats.likedGamesCount}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 transition-colors">
+                  Curtidos
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-lg shadow mb-6">
-          <div className="flex border-b">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-700 mb-6 transition-colors">
+          <div className="flex border-b dark:border-gray-700 transition-colors">
             <button
               onClick={() => setActiveTab("reviews")}
               className={`flex-1 px-6 py-4 text-center font-medium transition ${
                 activeTab === "reviews"
-                  ? "text-indigo-600 border-b-2 border-indigo-600"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
             >
               Minhas Reviews ({reviews.length})
@@ -179,8 +223,8 @@ export default function Profile() {
               onClick={() => setActiveTab("liked")}
               className={`flex-1 px-6 py-4 text-center font-medium transition ${
                 activeTab === "liked"
-                  ? "text-indigo-600 border-b-2 border-indigo-600"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
             >
               Jogos Curtidos ({likedGames.length})
@@ -189,8 +233,8 @@ export default function Profile() {
               onClick={() => setActiveTab("status")}
               className={`flex-1 px-6 py-4 text-center font-medium transition ${
                 activeTab === "status"
-                  ? "text-indigo-600 border-b-2 border-indigo-600"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
             >
               Status dos Jogos
@@ -199,7 +243,7 @@ export default function Profile() {
         </div>
 
         {/* Tab Content */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-700 p-6 transition-colors">
           {/* Reviews Tab */}
           {activeTab === "reviews" && (
             <div className="space-y-4">

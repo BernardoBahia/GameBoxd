@@ -116,4 +116,81 @@ export class UserService {
       throw new Error("Falha ao deletar usuário");
     }
   }
+
+  async getUserStats(userId: string) {
+    try {
+      const [reviewsCount, listsCount, likedGamesCount, gameStatus] =
+        await Promise.all([
+          prisma.review.count({ where: { userId } }),
+          prisma.list.count({ where: { userId } }),
+          prisma.userLikedGame.count({ where: { userId } }),
+          prisma.userGameStatus.groupBy({
+            by: ["status"],
+            where: { userId },
+            _count: { status: true },
+          }),
+        ]);
+
+      const statusCounts = {
+        playing: 0,
+        completed: 0,
+        wantToPlay: 0,
+      };
+
+      gameStatus.forEach((status) => {
+        if (status.status === "PLAYING")
+          statusCounts.playing = status._count.status;
+        if (status.status === "COMPLETED")
+          statusCounts.completed = status._count.status;
+        if (status.status === "WANT_TO_PLAY")
+          statusCounts.wantToPlay = status._count.status;
+      });
+
+      return {
+        reviewsCount,
+        listsCount,
+        likedGamesCount,
+        gamesCount:
+          statusCounts.playing +
+          statusCounts.completed +
+          statusCounts.wantToPlay,
+        statusCounts,
+      };
+    } catch (error) {
+      console.error("Erro ao buscar estatísticas do usuário:", error);
+      throw new Error("Falha ao buscar estatísticas do usuário");
+    }
+  }
+
+  async getUserWithPublicData(userId: string) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          reviews: {
+            include: { game: true },
+            orderBy: { createdAt: "desc" },
+            take: 10,
+          },
+          lists: {
+            where: { isPublic: true },
+            include: {
+              listGames: {
+                include: { game: true },
+              },
+            },
+          },
+        },
+      });
+
+      if (!user) return null;
+
+      // Remove password from response
+      const { password, ...userWithoutPassword } = user;
+      return userWithoutPassword;
+    } catch (error) {
+      console.error("Erro ao buscar dados públicos do usuário:", error);
+      throw new Error("Falha ao buscar dados públicos do usuário");
+    }
+  }
 }

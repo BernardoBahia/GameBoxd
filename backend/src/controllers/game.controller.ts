@@ -8,7 +8,18 @@ export const GameController = {
     try {
       const page = Number(req.query.page) || 1;
       const pageSize = Number(req.query.pageSize) || 10;
-      const games = await gameService.getGames(page, pageSize);
+
+      const filters: any = {};
+      if (req.query.platforms) filters.platforms = String(req.query.platforms);
+      if (req.query.genres) filters.genres = String(req.query.genres);
+      if (req.query.dates) filters.dates = String(req.query.dates);
+      if (req.query.ordering) filters.ordering = String(req.query.ordering);
+
+      const games = await gameService.getGames(
+        page,
+        pageSize,
+        Object.keys(filters).length > 0 ? filters : undefined
+      );
 
       res.status(200).json(games);
     } catch (error) {

@@ -571,28 +571,39 @@ export default function GameDetail() {
                 {reviews.map((review) => (
                   <div
                     key={review.id}
-                    className="bg-white p-6 rounded-lg shadow"
+                    className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow dark:shadow-gray-700 transition-colors"
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <div className="font-semibold">
-                          Usuário #{review.userId}
-                        </div>
+                        {review.user ? (
+                          <Link
+                            to={`/users/${review.user.id}`}
+                            className="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors"
+                          >
+                            {review.user.name}
+                          </Link>
+                        ) : (
+                          <div className="font-semibold text-gray-900 dark:text-white transition-colors">
+                            Usuário #{review.userId}
+                          </div>
+                        )}
                         <div className="text-yellow-500 font-bold">
                           ⭐ {review.rating}/10
                         </div>
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-gray-500 dark:text-gray-400 transition-colors">
                         {new Date(review.createdAt).toLocaleDateString("pt-BR")}
                       </div>
                     </div>
-                    <p className="text-gray-700 mb-3">{review.comment}</p>
+                    <p className="text-gray-700 dark:text-gray-300 mb-3 transition-colors">
+                      {review.comment}
+                    </p>
                     {user && user.id === review.userId && (
                       <button
                         onClick={() =>
                           handleDeleteReview(review.id, review.userId)
                         }
-                        className="text-sm text-red-600 hover:text-red-800 transition"
+                        className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors"
                       >
                         Deletar
                       </button>

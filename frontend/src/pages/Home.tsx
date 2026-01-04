@@ -258,6 +258,14 @@ export default function Home() {
                       >
                         Jogo #{review.gameId}
                       </Link>
+                      {review.user && (
+                        <Link
+                          to={`/users/${review.user.id}`}
+                          className="block text-sm text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 mt-1"
+                        >
+                          por {review.user.name}
+                        </Link>
+                      )}
                     </div>
                     <div className="flex items-center gap-1">
                       <span className="text-yellow-400">★</span>

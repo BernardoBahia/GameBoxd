@@ -43,7 +43,13 @@ export class GameService {
 
   getGames = async (
     page = 1,
-    pageSize = 10
+    pageSize = 10,
+    filters?: {
+      platforms?: string;
+      genres?: string;
+      dates?: string;
+      ordering?: string;
+    }
   ): Promise<{
     results: GameSummary[];
     count: number;
@@ -51,8 +57,15 @@ export class GameService {
     previous: string | null;
   }> => {
     try {
+      const params: any = { page, page_size: pageSize };
+
+      if (filters?.platforms) params.platforms = filters.platforms;
+      if (filters?.genres) params.genres = filters.genres;
+      if (filters?.dates) params.dates = filters.dates;
+      if (filters?.ordering) params.ordering = filters.ordering;
+
       const response = await rawgApi.get<RawgListResponse>("/games", {
-        params: { page, page_size: pageSize },
+        params,
       });
 
       return {

@@ -16,11 +16,22 @@ interface PaginatedResponse<T> {
 export const gameService = {
   async getGames(
     page = 1,
-    pageSize = 10
+    pageSize = 10,
+    filters?: {
+      platforms?: string;
+      genres?: string;
+      dates?: string;
+      ordering?: string;
+    }
   ): Promise<PaginatedResponse<GameSummary>> {
-    const response = await api.get("/games", {
-      params: { page, pageSize },
-    });
+    const params: any = { page, pageSize };
+
+    if (filters?.platforms) params.platforms = filters.platforms;
+    if (filters?.genres) params.genres = filters.genres;
+    if (filters?.dates) params.dates = filters.dates;
+    if (filters?.ordering) params.ordering = filters.ordering;
+
+    const response = await api.get("/games", { params });
     return response.data;
   },
 

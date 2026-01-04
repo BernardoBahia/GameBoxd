@@ -9,6 +9,7 @@ import Register from "./pages/Register";
 import Games from "./pages/Games";
 import GameDetail from "./pages/GameDetail";
 import Profile from "./pages/Profile";
+import PublicProfile from "./pages/PublicProfile";
 import MyLists from "./pages/MyLists";
 import MyGames from "./pages/MyGames";
 import Favorites from "./pages/Favorites";
@@ -27,6 +28,7 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/games" element={<Games />} />
               <Route path="/games/:id" element={<GameDetail />} />
+              <Route path="/users/:id" element={<PublicProfile />} />
               <Route
                 path="/profile"
                 element={
