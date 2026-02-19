@@ -6,7 +6,7 @@ export class ReviewService {
     userId: string,
     gameId: string,
     rating: number,
-    comment: string
+    comment: string,
   ): Promise<Review> {
     try {
       const createdReview = await prisma.review.create({
@@ -57,6 +57,7 @@ export class ReviewService {
     try {
       const reviews = await prisma.review.findMany({
         where: { userId },
+        orderBy: { createdAt: "desc" },
         include: {
           game: true,
         },
@@ -103,7 +104,7 @@ export class ReviewService {
   async updateReview(
     id: string,
     userId: string,
-    data: { rating?: number; comment?: string }
+    data: { rating?: number; comment?: string },
   ): Promise<Review> {
     try {
       const existingReview = await prisma.review.findFirst({
@@ -128,6 +129,14 @@ export class ReviewService {
       };
     } catch (error) {
       console.error("Erro ao atualizar review:", error);
+
+      if (
+        error instanceof Error &&
+        error.message === "Review não encontrado ou sem permissão"
+      ) {
+        throw error;
+      }
+
       throw new Error("Falha ao atualizar review");
     }
   }

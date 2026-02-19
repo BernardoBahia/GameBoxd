@@ -68,7 +68,7 @@ describe("ReviewService", () => {
         reviewData.userId,
         reviewData.gameId,
         reviewData.rating,
-        reviewData.comment
+        reviewData.comment,
       );
 
       expect(prismaMock.review.create).toHaveBeenCalledWith({
@@ -88,7 +88,7 @@ describe("ReviewService", () => {
       prismaMock.review.create.mockRejectedValue(new Error("Database error"));
 
       await expect(
-        reviewService.createReview("user-123", "game-456", 8, "Bom jogo")
+        reviewService.createReview("user-123", "game-456", 8, "Bom jogo"),
       ).rejects.toThrow("Falha ao criar review");
     });
   });
@@ -152,7 +152,7 @@ describe("ReviewService", () => {
       prismaMock.review.findMany.mockRejectedValue(new Error("Database error"));
 
       await expect(
-        reviewService.getReviewsByGameId("game-456")
+        reviewService.getReviewsByGameId("game-456"),
       ).rejects.toThrow("Falha ao buscar reviews do jogo");
     });
   });
@@ -183,6 +183,7 @@ describe("ReviewService", () => {
 
       expect(prismaMock.review.findMany).toHaveBeenCalledWith({
         where: { userId },
+        orderBy: { createdAt: "desc" },
         include: {
           game: true,
         },
@@ -195,7 +196,7 @@ describe("ReviewService", () => {
       prismaMock.review.findMany.mockRejectedValue(new Error("Database error"));
 
       await expect(
-        reviewService.getReviewsByUserId("user-123")
+        reviewService.getReviewsByUserId("user-123"),
       ).rejects.toThrow("Falha ao buscar reviews do usuário");
     });
   });
@@ -255,11 +256,11 @@ describe("ReviewService", () => {
 
     it("deve lançar erro ao falhar na busca", async () => {
       prismaMock.review.findUnique.mockRejectedValue(
-        new Error("Database error")
+        new Error("Database error"),
       );
 
       await expect(reviewService.getReviewById("review-1")).rejects.toThrow(
-        "Falha ao buscar review por ID"
+        "Falha ao buscar review por ID",
       );
     });
   });
@@ -296,7 +297,7 @@ describe("ReviewService", () => {
       const review = await reviewService.updateReview(
         reviewId,
         userId,
-        updateData
+        updateData,
       );
 
       expect(prismaMock.review.findFirst).toHaveBeenCalledWith({
@@ -317,7 +318,7 @@ describe("ReviewService", () => {
       prismaMock.review.findFirst.mockResolvedValue(null);
 
       await expect(
-        reviewService.updateReview("review-1", "user-123", { rating: 10 })
+        reviewService.updateReview("review-1", "user-123", { rating: 10 }),
       ).rejects.toThrow("Review não encontrado ou sem permissão");
     });
 
@@ -336,7 +337,7 @@ describe("ReviewService", () => {
       prismaMock.review.update.mockRejectedValue(new Error("Database error"));
 
       await expect(
-        reviewService.updateReview("review-1", "user-123", { rating: 9 })
+        reviewService.updateReview("review-1", "user-123", { rating: 9 }),
       ).rejects.toThrow("Falha ao atualizar review");
     });
   });
@@ -360,11 +361,11 @@ describe("ReviewService", () => {
 
     it("deve lançar erro ao falhar na exclusão", async () => {
       prismaMock.review.deleteMany.mockRejectedValue(
-        new Error("Database error")
+        new Error("Database error"),
       );
 
       await expect(
-        reviewService.deleteReview("review-1", "user-123")
+        reviewService.deleteReview("review-1", "user-123"),
       ).rejects.toThrow("Falha ao deletar review");
     });
   });
@@ -404,11 +405,11 @@ describe("ReviewService", () => {
 
     it("deve lançar erro ao falhar no cálculo", async () => {
       prismaMock.review.aggregate.mockRejectedValue(
-        new Error("Database error")
+        new Error("Database error"),
       );
 
       await expect(reviewService.getAverageRating("game-456")).rejects.toThrow(
-        "Falha ao calcular média de rating"
+        "Falha ao calcular média de rating",
       );
     });
   });

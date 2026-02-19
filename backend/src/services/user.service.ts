@@ -9,6 +9,7 @@ export class UserService {
       id: prismaUser.id,
       email: prismaUser.email,
       name: prismaUser.name,
+      bio: prismaUser.bio ?? null,
       passwordHash: prismaUser.password,
       createdAt: prismaUser.createdAt,
       updatedAt: prismaUser.updatedAt ?? prismaUser.createdAt,
@@ -18,7 +19,7 @@ export class UserService {
   async createUser(
     email: string,
     name: string,
-    password: string
+    password: string,
   ): Promise<User> {
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -85,7 +86,12 @@ export class UserService {
 
   async updateUser(
     id: string,
-    data: { email?: string; name?: string; password?: string }
+    data: {
+      email?: string;
+      name?: string;
+      password?: string;
+      bio?: string | null;
+    },
   ): Promise<User> {
     try {
       if (data.password) {

@@ -16,6 +16,10 @@ export interface GameSummary {
   background_image: string;
   rating?: number;
   metacritic?: number;
+  // Average rating from this app's reviews (0..5).
+  gameboxdRating?: number;
+  gameboxdRatingCount?: number;
+  genres?: string[];
 }
 
 export interface GameDetails {
@@ -25,6 +29,10 @@ export interface GameDetails {
   background_image: string;
   rating?: number;
   metacritic?: number;
+  // Average rating from this app's reviews (0..5).
+  gameboxdRating?: number;
+  gameboxdRatingCount?: number;
+  description?: string;
   genres: string[];
   developers: string[];
   publishers: string[];
@@ -39,6 +47,8 @@ export interface RawgGame {
   background_image: string;
   rating?: number;
   metacritic?: number;
+  description?: string;
+  description_raw?: string;
   genres?: { name: string }[];
   developers?: { name: string }[];
   publishers?: { name: string }[];
@@ -48,6 +58,25 @@ export interface RawgGame {
 
 export interface RawgListResponse {
   results: RawgGame[];
+  count: number;
+  next: string | null;
+  previous: string | null;
+}
+
+export interface GenreSummary {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+export interface RawgGenre {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+export interface RawgGenreListResponse {
+  results: RawgGenre[];
   count: number;
   next: string | null;
   previous: string | null;

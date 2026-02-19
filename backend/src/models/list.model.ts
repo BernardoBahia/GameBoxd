@@ -15,6 +15,9 @@ export interface List {
       name?: string;
       background_image?: string;
       released?: string;
+      metacritic?: number;
+      gameboxdRating?: number;
+      gameboxdRatingCount?: number;
       genres?: string[];
     };
   }[];

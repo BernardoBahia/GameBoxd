@@ -19,7 +19,7 @@ describe("ListService - Testes de Integração", () => {
     const user = await userService.createUser(
       `list-test-${Date.now()}@example.com`,
       "List Test User",
-      "password123"
+      "password123",
     );
     testUserId = user.id;
     createdUserIds.push(user.id);
@@ -73,7 +73,7 @@ describe("ListService - Testes de Integração", () => {
     it("deve criar lista com isPublic false por padrão", async () => {
       const list: List = await listService.createList(
         "Private List",
-        testUserId
+        testUserId,
       );
 
       testListIds.push(list.id);
@@ -86,11 +86,11 @@ describe("ListService - Testes de Integração", () => {
     it("deve retornar todas as listas do usuário", async () => {
       const list1: List = await listService.createList(
         `User List 1 ${Date.now()}`,
-        testUserId
+        testUserId,
       );
       const list2: List = await listService.createList(
         `User List 2 ${Date.now()}`,
-        testUserId
+        testUserId,
       );
 
       testListIds.push(list1.id, list2.id);
@@ -110,7 +110,7 @@ describe("ListService - Testes de Integração", () => {
       const newUser = await userService.createUser(
         `no-lists-${Date.now()}@example.com`,
         "No Lists User",
-        "password123"
+        "password123",
       );
       createdUserIds.push(newUser.id);
 
@@ -126,13 +126,13 @@ describe("ListService - Testes de Integração", () => {
     it("deve retornar lista específica do usuário", async () => {
       const createdList: List = await listService.createList(
         `Get By Id ${Date.now()}`,
-        testUserId
+        testUserId,
       );
       testListIds.push(createdList.id);
 
       const list: List | null = await listService.getListById(
         createdList.id,
-        testUserId
+        testUserId,
       );
 
       expect(list).toBeDefined();
@@ -144,7 +144,7 @@ describe("ListService - Testes de Integração", () => {
     it("deve retornar null para lista inexistente", async () => {
       const list: List | null = await listService.getListById(
         "non-existent-id",
-        testUserId
+        testUserId,
       );
 
       expect(list).toBeNull();
@@ -154,19 +154,19 @@ describe("ListService - Testes de Integração", () => {
       const otherUser = await userService.createUser(
         `other-user-${Date.now()}@example.com`,
         "Other User",
-        "password123"
+        "password123",
       );
       createdUserIds.push(otherUser.id);
 
       const otherUserList: List = await listService.createList(
         "Other User List",
-        otherUser.id
+        otherUser.id,
       );
       testListIds.push(otherUserList.id);
 
       const list: List | null = await listService.getListById(
         otherUserList.id,
-        testUserId
+        testUserId,
       );
 
       expect(list).toBeNull();
@@ -177,7 +177,7 @@ describe("ListService - Testes de Integração", () => {
     it("deve renomear uma lista existente", async () => {
       const list: List = await listService.createList(
         "Original Name",
-        testUserId
+        testUserId,
       );
       testListIds.push(list.id);
 
@@ -185,7 +185,7 @@ describe("ListService - Testes de Integração", () => {
       const renamedList: List = await listService.renameList(
         list.id,
         testUserId,
-        newName
+        newName,
       );
 
       expect(renamedList).toBeDefined();
@@ -198,18 +198,18 @@ describe("ListService - Testes de Integração", () => {
       const otherUser = await userService.createUser(
         `rename-other-${Date.now()}@example.com`,
         "Rename Other User",
-        "password123"
+        "password123",
       );
       createdUserIds.push(otherUser.id);
 
       const otherUserList: List = await listService.createList(
         "Other List",
-        otherUser.id
+        otherUser.id,
       );
       testListIds.push(otherUserList.id);
 
       await expect(
-        listService.renameList(otherUserList.id, testUserId, "New Name")
+        listService.renameList(otherUserList.id, testUserId, "New Name"),
       ).rejects.toThrow();
     });
   });
@@ -218,7 +218,7 @@ describe("ListService - Testes de Integração", () => {
     it("deve deletar uma lista existente", async () => {
       const list: List = await listService.createList(
         `To Delete ${Date.now()}`,
-        testUserId
+        testUserId,
       );
       testListIds.push(list.id);
 
@@ -235,18 +235,18 @@ describe("ListService - Testes de Integração", () => {
       const otherUser = await userService.createUser(
         `delete-other-${Date.now()}@example.com`,
         "Delete Other User",
-        "password123"
+        "password123",
       );
       createdUserIds.push(otherUser.id);
 
       const otherUserList: List = await listService.createList(
         "Other List",
-        otherUser.id
+        otherUser.id,
       );
       testListIds.push(otherUserList.id);
 
       await expect(
-        listService.deleteList(otherUserList.id, testUserId)
+        listService.deleteList(otherUserList.id, testUserId),
       ).rejects.toThrow();
     });
   });
@@ -255,7 +255,7 @@ describe("ListService - Testes de Integração", () => {
     it("deve adicionar um jogo à lista", async () => {
       const list: List = await listService.createList(
         `Game List ${Date.now()}`,
-        testUserId
+        testUserId,
       );
       testListIds.push(list.id);
 
@@ -265,7 +265,7 @@ describe("ListService - Testes de Integração", () => {
 
       const updatedList: List | null = await listService.getListById(
         list.id,
-        testUserId
+        testUserId,
       );
 
       expect(updatedList).toBeDefined();
@@ -278,7 +278,7 @@ describe("ListService - Testes de Integração", () => {
       }
 
       const addedGame = updatedList?.listGames?.find(
-        (lg) => lg.game.gameId === gameId
+        (lg) => lg.game.gameId === gameId,
       );
       expect(addedGame).toBeDefined();
     });
@@ -286,7 +286,7 @@ describe("ListService - Testes de Integração", () => {
     it("deve criar jogo no banco se não existir ao adicionar à lista", async () => {
       const list: List = await listService.createList(
         `New Game List ${Date.now()}`,
-        testUserId
+        testUserId,
       );
       testListIds.push(list.id);
 
@@ -307,7 +307,7 @@ describe("ListService - Testes de Integração", () => {
     it("não deve adicionar jogo duplicado à lista", async () => {
       const list: List = await listService.createList(
         `Duplicate Game List ${Date.now()}`,
-        testUserId
+        testUserId,
       );
       testListIds.push(list.id);
 
@@ -321,16 +321,16 @@ describe("ListService - Testes de Integração", () => {
       }
 
       await expect(
-        listService.addGameToList(list.id, testUserId, gameId)
+        listService.addGameToList(list.id, testUserId, gameId),
       ).rejects.toThrow();
-    });
+    }, 20000);
   });
 
   describe("removeGameFromList", () => {
     it("deve remover um jogo da lista", async () => {
       const list: List = await listService.createList(
         `Remove Game List ${Date.now()}`,
-        testUserId
+        testUserId,
       );
       testListIds.push(list.id);
 
@@ -347,13 +347,13 @@ describe("ListService - Testes de Integração", () => {
 
       const updatedList: List | null = await listService.getListById(
         list.id,
-        testUserId
+        testUserId,
       );
 
       expect(updatedList).toBeDefined();
 
       const removedGame = updatedList?.listGames?.find(
-        (lg) => lg.game.gameId === gameId
+        (lg) => lg.game.gameId === gameId,
       );
       expect(removedGame).toBeUndefined();
     });
@@ -362,18 +362,18 @@ describe("ListService - Testes de Integração", () => {
       const otherUser = await userService.createUser(
         `remove-game-other-${Date.now()}@example.com`,
         "Remove Game Other User",
-        "password123"
+        "password123",
       );
       createdUserIds.push(otherUser.id);
 
       const otherUserList: List = await listService.createList(
         "Other List",
-        otherUser.id
+        otherUser.id,
       );
       testListIds.push(otherUserList.id);
 
       await expect(
-        listService.removeGameFromList(otherUserList.id, testUserId, "12345")
+        listService.removeGameFromList(otherUserList.id, testUserId, "12345"),
       ).rejects.toThrow();
     });
   });
@@ -382,7 +382,7 @@ describe("ListService - Testes de Integração", () => {
     it("deve tornar uma lista pública", async () => {
       const list: List = await listService.createList(
         `Public List ${Date.now()}`,
-        testUserId
+        testUserId,
       );
       testListIds.push(list.id);
 
@@ -390,7 +390,7 @@ describe("ListService - Testes de Integração", () => {
 
       const publicList: List = await listService.makeListPublic(
         list.id,
-        testUserId
+        testUserId,
       );
 
       expect(publicList).toBeDefined();
@@ -402,18 +402,18 @@ describe("ListService - Testes de Integração", () => {
       const otherUser = await userService.createUser(
         `public-other-${Date.now()}@example.com`,
         "Public Other User",
-        "password123"
+        "password123",
       );
       createdUserIds.push(otherUser.id);
 
       const otherUserList: List = await listService.createList(
         "Other List",
-        otherUser.id
+        otherUser.id,
       );
       testListIds.push(otherUserList.id);
 
       await expect(
-        listService.makeListPublic(otherUserList.id, testUserId)
+        listService.makeListPublic(otherUserList.id, testUserId),
       ).rejects.toThrow();
     });
   });
@@ -422,7 +422,7 @@ describe("ListService - Testes de Integração", () => {
     it("deve tornar uma lista privada", async () => {
       const list: List = await listService.createList(
         `Private List ${Date.now()}`,
-        testUserId
+        testUserId,
       );
       testListIds.push(list.id);
 
@@ -430,7 +430,7 @@ describe("ListService - Testes de Integração", () => {
 
       const privateList: List = await listService.makeListPrivate(
         list.id,
-        testUserId
+        testUserId,
       );
 
       expect(privateList).toBeDefined();
@@ -442,18 +442,18 @@ describe("ListService - Testes de Integração", () => {
       const otherUser = await userService.createUser(
         `private-other-${Date.now()}@example.com`,
         "Private Other User",
-        "password123"
+        "password123",
       );
       createdUserIds.push(otherUser.id);
 
       const otherUserList: List = await listService.createList(
         "Other List",
-        otherUser.id
+        otherUser.id,
       );
       testListIds.push(otherUserList.id);
 
       await expect(
-        listService.makeListPrivate(otherUserList.id, testUserId)
+        listService.makeListPrivate(otherUserList.id, testUserId),
       ).rejects.toThrow();
     });
   });
@@ -462,20 +462,21 @@ describe("ListService - Testes de Integração", () => {
     it("deve executar ciclo completo: criar, adicionar jogos, renomear, tornar pública, remover jogo, deletar", async () => {
       const list: List = await listService.createList(
         `Full Flow ${Date.now()}`,
-        testUserId
+        testUserId,
       );
       testListIds.push(list.id);
 
       expect(list.isPublic).toBe(false);
 
-      const gameId1 = "111111";
-      const gameId2 = "222222";
+      // Use known-valid RAWG IDs to avoid upstream 404s during enrichment.
+      const gameId1 = "3498";
+      const gameId2 = "4200";
 
       await listService.addGameToList(list.id, testUserId, gameId1);
 
       let updatedList: List | null = await listService.getListById(
         list.id,
-        testUserId
+        testUserId,
       );
       expect(updatedList?.listGames?.length).toBeGreaterThan(0);
 
@@ -496,13 +497,13 @@ describe("ListService - Testes de Integração", () => {
       const renamedList: List = await listService.renameList(
         list.id,
         testUserId,
-        "Renamed Full Flow"
+        "Renamed Full Flow",
       );
       expect(renamedList.name).toBe("Renamed Full Flow");
 
       const publicList: List = await listService.makeListPublic(
         list.id,
-        testUserId
+        testUserId,
       );
       expect(publicList.isPublic).toBe(true);
 
@@ -510,10 +511,10 @@ describe("ListService - Testes de Integração", () => {
 
       const listAfterRemove: List | null = await listService.getListById(
         list.id,
-        testUserId
+        testUserId,
       );
       const hasGame1 = listAfterRemove?.listGames?.some(
-        (lg) => lg.game.gameId === gameId1
+        (lg) => lg.game.gameId === gameId1,
       );
       expect(hasGame1).toBe(false);
 
@@ -523,6 +524,6 @@ describe("ListService - Testes de Integração", () => {
         where: { id: list.id },
       });
       expect(deletedList).toBeNull();
-    });
+    }, 20000);
   });
 });

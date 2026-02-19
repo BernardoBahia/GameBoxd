@@ -23,7 +23,7 @@ describe("GameService - Testes de Integração", () => {
     const user = await userService.createUser(
       `game-test-${Date.now()}@example.com`,
       "Game Test User",
-      "password123"
+      "password123",
     );
     testUserId = user.id;
     createdUserIds.push(user.id);
@@ -155,7 +155,7 @@ describe("GameService - Testes de Integração", () => {
       const newUser = await userService.createUser(
         `no-likes-${Date.now()}@example.com`,
         "No Likes User",
-        "password123"
+        "password123",
       );
       createdUserIds.push(newUser.id);
 
@@ -190,7 +190,7 @@ describe("GameService - Testes de Integração", () => {
       const result = await gameService.setGameStatus(
         testUserId,
         gameId,
-        "PLAYING"
+        "PLAYING",
       );
 
       expect(result.message).toBe("Status do jogo definido com sucesso");
@@ -215,7 +215,7 @@ describe("GameService - Testes de Integração", () => {
       const result = await gameService.setGameStatus(
         testUserId,
         gameId,
-        "COMPLETED"
+        "COMPLETED",
       );
 
       expect(result.status).toBe("COMPLETED");
@@ -232,7 +232,7 @@ describe("GameService - Testes de Integração", () => {
       const result = await gameService.setGameStatus(
         testUserId,
         gameId,
-        "WANT_TO_PLAY"
+        "WANT_TO_PLAY",
       );
 
       expect(result.status).toBe("WANT_TO_PLAY");
@@ -249,7 +249,7 @@ describe("GameService - Testes de Integração", () => {
       let result = await gameService.setGameStatus(
         testUserId,
         gameId,
-        "WANT_TO_PLAY"
+        "WANT_TO_PLAY",
       );
       expect(result.status).toBe("WANT_TO_PLAY");
       expect(result.message).toBe("Status do jogo definido com sucesso");
@@ -317,7 +317,7 @@ describe("GameService - Testes de Integração", () => {
       const nonExistentGameId = `non-existent-${Date.now()}`;
 
       await expect(
-        gameService.removeGameStatus(testUserId, nonExistentGameId)
+        gameService.removeGameStatus(testUserId, nonExistentGameId),
       ).rejects.toThrow("Erro ao remover status do jogo");
     });
   });
@@ -347,7 +347,7 @@ describe("GameService - Testes de Integração", () => {
 
       const playingGames = await gameService.getUserGamesByStatus(
         testUserId,
-        "PLAYING"
+        "PLAYING",
       );
 
       expect(playingGames).toBeDefined();
@@ -409,7 +409,7 @@ describe("GameService - Testes de Integração", () => {
 
       const games = await gameService.getUserGamesByStatus(
         testUserId,
-        "PLAYING"
+        "PLAYING",
       );
 
       const gameIds = games.map((g) => g.gameId);
@@ -423,7 +423,7 @@ describe("GameService - Testes de Integração", () => {
       const newUser = await userService.createUser(
         `no-games-${Date.now()}@example.com`,
         "No Games User",
-        "password123"
+        "password123",
       );
       createdUserIds.push(newUser.id);
 
@@ -444,7 +444,7 @@ describe("GameService - Testes de Integração", () => {
 
       const games = await gameService.getUserGamesByStatus(
         testUserId,
-        "PLAYING"
+        "PLAYING",
       );
 
       const targetGame = games.find((g) => g.gameId === gameId);
@@ -472,7 +472,7 @@ describe("GameService - Testes de Integração", () => {
       let statusResult = await gameService.setGameStatus(
         testUserId,
         gameId,
-        "WANT_TO_PLAY"
+        "WANT_TO_PLAY",
       );
       expect(statusResult.status).toBe("WANT_TO_PLAY");
 
@@ -482,20 +482,20 @@ describe("GameService - Testes de Integração", () => {
       statusResult = await gameService.setGameStatus(
         testUserId,
         gameId,
-        "PLAYING"
+        "PLAYING",
       );
       expect(statusResult.status).toBe("PLAYING");
 
       statusResult = await gameService.setGameStatus(
         testUserId,
         gameId,
-        "COMPLETED"
+        "COMPLETED",
       );
       expect(statusResult.status).toBe("COMPLETED");
 
       const removeResult = await gameService.removeGameStatus(
         testUserId,
-        gameId
+        gameId,
       );
       expect(removeResult.message).toBe("Status do jogo removido com sucesso");
 
@@ -512,7 +512,8 @@ describe("GameService - Testes de Integração", () => {
 
   describe("Testes de API RAWG - getGames", () => {
     it("deve retornar lista de jogos com tipo GameSummary", async () => {
-      const games: GameSummary[] = await gameService.getGames(1, 5);
+      const response = await gameService.getGames(1, 5);
+      const games: GameSummary[] = response.results;
 
       expect(games).toBeDefined();
       expect(Array.isArray(games)).toBe(true);
@@ -532,11 +533,8 @@ describe("GameService - Testes de Integração", () => {
 
   describe("Testes de API RAWG - searchGames", () => {
     it("deve buscar jogos e retornar GameDetails com DLCs", async () => {
-      const searchResults: GameDetails[] = await gameService.searchGames(
-        "The Witcher",
-        1,
-        2
-      );
+      const response = await gameService.searchGames("The Witcher", 1, 2);
+      const searchResults: GameDetails[] = response.results;
 
       expect(searchResults).toBeDefined();
       expect(Array.isArray(searchResults)).toBe(true);

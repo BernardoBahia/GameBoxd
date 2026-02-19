@@ -18,7 +18,11 @@ import { GameService } from "../../services/game.service";
 vi.mock("@prisma/client", () => {
   const mockGame = {
     findUnique: vi.fn(),
+    findMany: vi.fn(),
     create: vi.fn(),
+  };
+  const mockReview = {
+    groupBy: vi.fn(),
   };
   const mockUserLikedGame = {
     findUnique: vi.fn(),
@@ -37,6 +41,7 @@ vi.mock("@prisma/client", () => {
   return {
     PrismaClient: class {
       game = mockGame;
+      review = mockReview;
       userLikedGame = mockUserLikedGame;
       userGameStatus = mockUserGameStatus;
     },
@@ -47,7 +52,11 @@ const prisma = new PrismaClient();
 const prismaMock = {
   game: prisma.game as unknown as {
     findUnique: Mock;
+    findMany: Mock;
     create: Mock;
+  },
+  review: prisma.review as unknown as {
+    groupBy: Mock;
   },
   userLikedGame: prisma.userLikedGame as unknown as {
     findUnique: Mock;
@@ -70,6 +79,11 @@ describe("GameService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     gameService = new GameService();
+
+    // GameService now enriches RAWG responses with GameBoxd ratings via Prisma.
+    // Default to no ratings in unit tests unless a test opts in.
+    prismaMock.game.findMany.mockResolvedValue([]);
+    prismaMock.review.groupBy.mockResolvedValue([]);
   });
 
   // ==========================================================================
@@ -80,6 +94,9 @@ describe("GameService", () => {
     it("deve retornar lista de jogos da API", async () => {
       mockAxiosGet.mockResolvedValue({
         data: {
+          count: 2,
+          next: null,
+          previous: null,
           results: [
             {
               id: 1,
@@ -97,18 +114,21 @@ describe("GameService", () => {
         },
       });
 
-      const games = await gameService.getGames(1, 10);
+      const response = await gameService.getGames(1, 10);
 
-      expect(games).toHaveLength(2);
-      expect(games[0].name).toBe("Game 1");
-      expect(games[1].name).toBe("Game 2");
+      expect(response.results).toHaveLength(2);
+      expect(response.count).toBe(2);
+      expect(response.next).toBeNull();
+      expect(response.previous).toBeNull();
+      expect(response.results[0].name).toBe("Game 1");
+      expect(response.results[1].name).toBe("Game 2");
     });
 
     it("deve lançar erro quando API falhar", async () => {
       mockAxiosGet.mockRejectedValue(new Error("API Error"));
 
       await expect(gameService.getGames()).rejects.toThrow(
-        "Erro ao obter jogos"
+        "Erro ao obter jogos",
       );
     });
   });
@@ -118,6 +138,9 @@ describe("GameService", () => {
       mockAxiosGet
         .mockResolvedValueOnce({
           data: {
+            count: 1,
+            next: null,
+            previous: null,
             results: [{ id: 10, name: "Minecraft" }],
           },
         })
@@ -135,23 +158,29 @@ describe("GameService", () => {
         })
         .mockResolvedValueOnce({
           data: {
+            count: 0,
+            next: null,
+            previous: null,
             results: [],
           },
         });
 
-      const games = await gameService.searchGames("minecraft", 1, 10);
+      const response = await gameService.searchGames("minecraft", 1, 10);
 
-      expect(games).toHaveLength(1);
-      expect(games[0].name).toBe("Minecraft");
-      expect(games[0].genres).toContain("Sandbox");
-      expect(games[0].developers).toContain("Mojang");
+      expect(response.results).toHaveLength(1);
+      expect(response.count).toBe(1);
+      expect(response.next).toBeNull();
+      expect(response.previous).toBeNull();
+      expect(response.results[0].name).toBe("Minecraft");
+      expect(response.results[0].genres).toContain("Sandbox");
+      expect(response.results[0].developers).toContain("Mojang");
     });
 
     it("deve lançar erro quando busca falhar", async () => {
       mockAxiosGet.mockRejectedValue(new Error("API Error"));
 
       await expect(gameService.searchGames("test")).rejects.toThrow(
-        "Erro ao buscar jogos"
+        "Erro ao buscar jogos",
       );
     });
   });
@@ -190,7 +219,7 @@ describe("GameService", () => {
       mockAxiosGet.mockRejectedValue(new Error("API Error"));
 
       await expect(gameService.searchGamesByPlatform(186)).rejects.toThrow(
-        "Erro ao buscar jogos por plataforma"
+        "Erro ao buscar jogos por plataforma",
       );
     });
   });
@@ -230,7 +259,7 @@ describe("GameService", () => {
       mockAxiosGet.mockRejectedValue(new Error("API Error"));
 
       await expect(gameService.searchGamesByGenre(5)).rejects.toThrow(
-        "Erro ao buscar jogos por gênero"
+        "Erro ao buscar jogos por gênero",
       );
     });
   });
@@ -269,7 +298,7 @@ describe("GameService", () => {
       mockAxiosGet.mockRejectedValue(new Error("API Error"));
 
       await expect(gameService.searchGamesByDlc(100)).rejects.toThrow(
-        "Erro ao buscar jogos por DLC"
+        "Erro ao buscar jogos por DLC",
       );
     });
   });
@@ -314,7 +343,7 @@ describe("GameService", () => {
       mockAxiosGet.mockRejectedValue(new Error("API Error"));
 
       await expect(gameService.getGameDetails(999)).rejects.toThrow(
-        "Erro ao buscar detalhes do jogo"
+        "Erro ao buscar detalhes do jogo",
       );
     });
   });
@@ -390,7 +419,7 @@ describe("GameService", () => {
       prismaMock.game.findUnique.mockRejectedValue(new Error("Database Error"));
 
       await expect(gameService.likeGame("user-123", "123")).rejects.toThrow(
-        "Erro ao curtir jogo"
+        "Erro ao curtir jogo",
       );
     });
   });
@@ -434,11 +463,11 @@ describe("GameService", () => {
 
     it("deve lançar erro ao falhar", async () => {
       prismaMock.userLikedGame.findMany.mockRejectedValue(
-        new Error("Database Error")
+        new Error("Database Error"),
       );
 
       await expect(gameService.getUserLikedGames("user-123")).rejects.toThrow(
-        "Erro ao buscar jogos curtidos"
+        "Erro ao buscar jogos curtidos",
       );
     });
   });
@@ -459,7 +488,7 @@ describe("GameService", () => {
       const result = await gameService.setGameStatus(
         "user-123",
         "123",
-        "PLAYING"
+        "PLAYING",
       );
 
       expect(prismaMock.userGameStatus.create).toHaveBeenCalledWith({
@@ -484,7 +513,7 @@ describe("GameService", () => {
 
       prismaMock.game.findUnique.mockResolvedValue(mockGame);
       prismaMock.userGameStatus.findUnique.mockResolvedValue(
-        mockExistingStatus
+        mockExistingStatus,
       );
       prismaMock.userGameStatus.update.mockResolvedValue({
         ...mockExistingStatus,
@@ -494,7 +523,7 @@ describe("GameService", () => {
       const result = await gameService.setGameStatus(
         "user-123",
         "123",
-        "COMPLETED"
+        "COMPLETED",
       );
 
       expect(prismaMock.userGameStatus.update).toHaveBeenCalledWith({
@@ -529,7 +558,7 @@ describe("GameService", () => {
       prismaMock.game.findUnique.mockRejectedValue(new Error("Database Error"));
 
       await expect(
-        gameService.setGameStatus("user-123", "123", "PLAYING")
+        gameService.setGameStatus("user-123", "123", "PLAYING"),
       ).rejects.toThrow("Erro ao definir status do jogo");
     });
   });
@@ -556,7 +585,7 @@ describe("GameService", () => {
       prismaMock.game.findUnique.mockResolvedValue(null);
 
       await expect(
-        gameService.removeGameStatus("user-123", "123")
+        gameService.removeGameStatus("user-123", "123"),
       ).rejects.toThrow("Erro ao remover status do jogo");
     });
 
@@ -564,7 +593,7 @@ describe("GameService", () => {
       prismaMock.game.findUnique.mockRejectedValue(new Error("Database Error"));
 
       await expect(
-        gameService.removeGameStatus("user-123", "123")
+        gameService.removeGameStatus("user-123", "123"),
       ).rejects.toThrow("Erro ao remover status do jogo");
     });
   });
@@ -594,7 +623,7 @@ describe("GameService", () => {
 
       const games = await gameService.getUserGamesByStatus(
         "user-123",
-        "PLAYING"
+        "PLAYING",
       );
 
       expect(prismaMock.userGameStatus.findMany).toHaveBeenCalledWith({
@@ -643,7 +672,7 @@ describe("GameService", () => {
 
       const games = await gameService.getUserGamesByStatus(
         "user-123",
-        "COMPLETED"
+        "COMPLETED",
       );
 
       expect(games).toHaveLength(0);
@@ -651,11 +680,11 @@ describe("GameService", () => {
 
     it("deve lançar erro ao falhar", async () => {
       prismaMock.userGameStatus.findMany.mockRejectedValue(
-        new Error("Database Error")
+        new Error("Database Error"),
       );
 
       await expect(
-        gameService.getUserGamesByStatus("user-123", "PLAYING")
+        gameService.getUserGamesByStatus("user-123", "PLAYING"),
       ).rejects.toThrow("Erro ao buscar jogos por status");
     });
   });

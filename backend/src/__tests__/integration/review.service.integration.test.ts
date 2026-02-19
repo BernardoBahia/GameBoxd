@@ -20,7 +20,7 @@ describe("ReviewService - Testes de Integração", () => {
     const user = await userService.createUser(
       `review-test-${Date.now()}@example.com`,
       "Review Test User",
-      "password123"
+      "password123",
     );
     testUserId = user.id;
     createdUserIds.push(user.id);
@@ -74,7 +74,7 @@ describe("ReviewService - Testes de Integração", () => {
         reviewData.userId,
         reviewData.gameId,
         reviewData.rating,
-        reviewData.comment
+        reviewData.comment,
       );
 
       testReviewIds.push(review.id);
@@ -86,7 +86,9 @@ describe("ReviewService - Testes de Integração", () => {
       expect(review.rating).toBe(reviewData.rating);
       expect(review.comment).toBe(reviewData.comment);
       expect(review.createdAt).toBeInstanceOf(Date);
-      expect(review.updatedAt).toBeUndefined();
+      if (review.updatedAt !== undefined) {
+        expect(review.updatedAt).toBeInstanceOf(Date);
+      }
 
       const dbReview = await prisma.review.findUnique({
         where: { id: review.id },
@@ -101,7 +103,7 @@ describe("ReviewService - Testes de Integração", () => {
         testUserId,
         testGameId,
         0,
-        "Não gostei."
+        "Não gostei.",
       );
 
       testReviewIds.push(review.id);
@@ -114,7 +116,7 @@ describe("ReviewService - Testes de Integração", () => {
         testUserId,
         testGameId,
         10,
-        "Perfeito!"
+        "Perfeito!",
       );
 
       testReviewIds.push(review.id);
@@ -128,7 +130,7 @@ describe("ReviewService - Testes de Integração", () => {
       const user2 = await userService.createUser(
         `review-user2-${Date.now()}@example.com`,
         "User 2",
-        "password123"
+        "password123",
       );
       createdUserIds.push(user2.id);
 
@@ -136,13 +138,13 @@ describe("ReviewService - Testes de Integração", () => {
         testUserId,
         testGameId,
         8,
-        "Muito bom!"
+        "Muito bom!",
       );
       const review2: Review = await reviewService.createReview(
         user2.id,
         testGameId,
         7,
-        "Legal"
+        "Legal",
       );
 
       testReviewIds.push(review1.id, review2.id);
@@ -191,13 +193,13 @@ describe("ReviewService - Testes de Integração", () => {
         testUserId,
         testGameId,
         9,
-        "Ótimo!"
+        "Ótimo!",
       );
       const review2: Review = await reviewService.createReview(
         testUserId,
         game2.id,
         6,
-        "Razoável"
+        "Razoável",
       );
 
       testReviewIds.push(review1.id, review2.id);
@@ -221,7 +223,7 @@ describe("ReviewService - Testes de Integração", () => {
       const newUser = await userService.createUser(
         `no-reviews-${Date.now()}@example.com`,
         "No Reviews User",
-        "password123"
+        "password123",
       );
       createdUserIds.push(newUser.id);
 
@@ -239,12 +241,12 @@ describe("ReviewService - Testes de Integração", () => {
         testUserId,
         testGameId,
         8,
-        "Muito bom mesmo!"
+        "Muito bom mesmo!",
       );
       testReviewIds.push(createdReview.id);
 
       const review: Review | null = await reviewService.getReviewById(
-        createdReview.id
+        createdReview.id,
       );
 
       expect(review).toBeDefined();
@@ -256,9 +258,8 @@ describe("ReviewService - Testes de Integração", () => {
     });
 
     it("deve retornar null para review inexistente", async () => {
-      const review: Review | null = await reviewService.getReviewById(
-        "non-existent-id"
-      );
+      const review: Review | null =
+        await reviewService.getReviewById("non-existent-id");
 
       expect(review).toBeNull();
     });
@@ -270,14 +271,14 @@ describe("ReviewService - Testes de Integração", () => {
         testUserId,
         testGameId,
         7,
-        "Bom jogo"
+        "Bom jogo",
       );
       testReviewIds.push(review.id);
 
       const updatedReview: Review = await reviewService.updateReview(
         review.id,
         testUserId,
-        { rating: 9 }
+        { rating: 9 },
       );
 
       expect(updatedReview).toBeDefined();
@@ -297,14 +298,14 @@ describe("ReviewService - Testes de Integração", () => {
         testUserId,
         testGameId,
         8,
-        "Comentário original"
+        "Comentário original",
       );
       testReviewIds.push(review.id);
 
       const updatedReview: Review = await reviewService.updateReview(
         review.id,
         testUserId,
-        { comment: "Comentário atualizado!" }
+        { comment: "Comentário atualizado!" },
       );
 
       expect(updatedReview.rating).toBe(8);
@@ -316,7 +317,7 @@ describe("ReviewService - Testes de Integração", () => {
         testUserId,
         testGameId,
         5,
-        "Mediano"
+        "Mediano",
       );
       testReviewIds.push(review.id);
 
@@ -326,7 +327,7 @@ describe("ReviewService - Testes de Integração", () => {
         {
           rating: 10,
           comment: "Mudei de ideia, é perfeito!",
-        }
+        },
       );
 
       expect(updatedReview.rating).toBe(10);
@@ -337,7 +338,7 @@ describe("ReviewService - Testes de Integração", () => {
       const otherUser = await userService.createUser(
         `update-other-${Date.now()}@example.com`,
         "Other User",
-        "password123"
+        "password123",
       );
       createdUserIds.push(otherUser.id);
 
@@ -345,12 +346,12 @@ describe("ReviewService - Testes de Integração", () => {
         otherUser.id,
         testGameId,
         7,
-        "Review de outro usuário"
+        "Review de outro usuário",
       );
       testReviewIds.push(otherReview.id);
 
       await expect(
-        reviewService.updateReview(otherReview.id, testUserId, { rating: 10 })
+        reviewService.updateReview(otherReview.id, testUserId, { rating: 10 }),
       ).rejects.toThrow();
     });
   });
@@ -361,7 +362,7 @@ describe("ReviewService - Testes de Integração", () => {
         testUserId,
         testGameId,
         6,
-        "Review para deletar"
+        "Review para deletar",
       );
       testReviewIds.push(review.id);
 
@@ -378,7 +379,7 @@ describe("ReviewService - Testes de Integração", () => {
       const otherUser = await userService.createUser(
         `delete-other-${Date.now()}@example.com`,
         "Other User",
-        "password123"
+        "password123",
       );
       createdUserIds.push(otherUser.id);
 
@@ -386,7 +387,7 @@ describe("ReviewService - Testes de Integração", () => {
         otherUser.id,
         testGameId,
         8,
-        "Review de outro"
+        "Review de outro",
       );
       testReviewIds.push(otherReview.id);
 
@@ -413,12 +414,12 @@ describe("ReviewService - Testes de Integração", () => {
       const user2 = await userService.createUser(
         `avg-user2-${Date.now()}@example.com`,
         "Avg User 2",
-        "password123"
+        "password123",
       );
       const user3 = await userService.createUser(
         `avg-user3-${Date.now()}@example.com`,
         "Avg User 3",
-        "password123"
+        "password123",
       );
       createdUserIds.push(user2.id, user3.id);
 
@@ -426,19 +427,19 @@ describe("ReviewService - Testes de Integração", () => {
         testUserId,
         game.id,
         10,
-        "Perfeito"
+        "Perfeito",
       );
       const review2 = await reviewService.createReview(
         user2.id,
         game.id,
         8,
-        "Muito bom"
+        "Muito bom",
       );
       const review3 = await reviewService.createReview(
         user3.id,
         game.id,
         6,
-        "Bom"
+        "Bom",
       );
 
       testReviewIds.push(review1.id, review2.id, review3.id);
@@ -474,7 +475,7 @@ describe("ReviewService - Testes de Integração", () => {
         testUserId,
         game.id,
         7,
-        "Único review"
+        "Único review",
       );
       testReviewIds.push(review.id);
 

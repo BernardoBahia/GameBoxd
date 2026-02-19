@@ -1,16 +1,35 @@
 import { Request, Response } from "express";
 import { ReviewService } from "../services/review.service";
+import type { AuthRequest } from "../middlewares/AuthMiddleware";
+import prisma from "../lib/prisma";
 
 const reviewService = new ReviewService();
 
-export const ReviewController = {
-  createReview: async (req: Request, res: Response) => {
-    try {
-      const { userId, gameId, rating, comment } = req.body;
+async function getOrCreateGameEntityByRawgId(rawgGameId: string) {
+  const existing = await prisma.game.findUnique({
+    where: { gameId: rawgGameId },
+  });
+  if (existing) return existing;
+  return prisma.game.create({ data: { gameId: rawgGameId } });
+}
 
-      if (!userId || !gameId || rating === undefined || !comment) {
+export const ReviewController = {
+  createReview: async (req: AuthRequest, res: Response) => {
+    try {
+      const tokenUserId = req.user?.id;
+      const { userId: bodyUserId, gameId, rating, comment } = req.body;
+
+      if (tokenUserId && bodyUserId && bodyUserId !== tokenUserId) {
+        return res
+          .status(403)
+          .json({ error: "userId não corresponde ao token" });
+      }
+
+      const resolvedUserId = tokenUserId ?? bodyUserId;
+
+      if (!resolvedUserId || !gameId || rating === undefined || !comment) {
         return res.status(400).json({
-          error: "userId, gameId, rating e comment são obrigatórios",
+          error: "gameId, rating e comment são obrigatórios",
         });
       }
 
@@ -20,11 +39,15 @@ export const ReviewController = {
         });
       }
 
+      // The frontend uses RAWG ids; our DB stores a separate Game entity.
+      // Resolve/create the Game row first and use its UUID for the Review FK.
+      const gameEntity = await getOrCreateGameEntityByRawgId(String(gameId));
+
       const review = await reviewService.createReview(
-        userId,
-        gameId,
+        resolvedUserId,
+        gameEntity.id,
         rating,
-        comment
+        comment,
       );
       res.status(201).json(review);
     } catch (error) {
@@ -41,7 +64,18 @@ export const ReviewController = {
         return res.status(400).json({ error: "gameId é obrigatório" });
       }
 
-      const reviews = await reviewService.getReviewsByGameId(gameId);
+      // Accept either internal Game.id (UUID) or external RAWG id (stored in Game.gameId)
+      const gameEntity = await prisma.game.findFirst({
+        where: {
+          OR: [{ id: String(gameId) }, { gameId: String(gameId) }],
+        },
+      });
+
+      if (!gameEntity) {
+        return res.status(200).json([]);
+      }
+
+      const reviews = await reviewService.getReviewsByGameId(gameEntity.id);
       res.status(200).json(reviews);
     } catch (error) {
       console.error("Erro ao buscar reviews do jogo:", error);
@@ -62,6 +96,22 @@ export const ReviewController = {
     } catch (error) {
       console.error("Erro ao buscar reviews do usuário:", error);
       res.status(500).json({ error: "Erro ao buscar reviews do usuário" });
+    }
+  },
+
+  getMyReviews: async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ error: "Token inválido" });
+      }
+
+      const reviews = await reviewService.getReviewsByUserId(userId);
+      res.status(200).json(reviews);
+    } catch (error) {
+      console.error("Erro ao buscar minhas reviews:", error);
+      res.status(500).json({ error: "Erro ao buscar minhas reviews" });
     }
   },
 
@@ -141,7 +191,21 @@ export const ReviewController = {
         return res.status(400).json({ error: "gameId é obrigatório" });
       }
 
-      const averageRating = await reviewService.getAverageRating(gameId);
+      // Accept either internal Game.id (UUID) or external RAWG id (stored in Game.gameId)
+      const gameEntity = await prisma.game.findFirst({
+        where: {
+          OR: [{ id: String(gameId) }, { gameId: String(gameId) }],
+        },
+      });
+
+      if (!gameEntity) {
+        return res.status(200).json({
+          gameId,
+          averageRating: 0,
+        });
+      }
+
+      const averageRating = await reviewService.getAverageRating(gameEntity.id);
 
       res.status(200).json({
         gameId,

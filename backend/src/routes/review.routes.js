@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const review_controller_1 = require("../controllers/review.controller");
+const AuthMiddleware_1 = require("../middlewares/AuthMiddleware");
+const router = (0, express_1.Router)();
+router.post("/reviews", AuthMiddleware_1.authMiddleware, review_controller_1.ReviewController.createReview);
+router.get("/reviews/me", AuthMiddleware_1.authMiddleware, review_controller_1.ReviewController.getMyReviews);
+router.get("/reviews/game/:gameId", review_controller_1.ReviewController.getReviewsByGameId);
+router.get("/reviews/user/:userId", review_controller_1.ReviewController.getReviewsByUserId);
+router.get("/reviews/:id", review_controller_1.ReviewController.getReviewById);
+router.put("/reviews/:id", review_controller_1.ReviewController.updateReview);
+router.delete("/reviews/:id", review_controller_1.ReviewController.deleteReview);
+router.get("/reviews/game/:gameId/average", review_controller_1.ReviewController.getAverageRating);
+exports.default = router;

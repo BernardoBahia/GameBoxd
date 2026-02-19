@@ -1,9 +1,32 @@
 import { GameService } from "../services/game.service";
 import { Request, Response } from "express";
+import prisma from "../lib/prisma";
+import { ReviewService } from "../services/review.service";
+import type { AuthRequest } from "../middlewares/AuthMiddleware";
 
 const gameService = new GameService();
+const reviewService = new ReviewService();
+
+async function getOrCreateGameEntityByRawgId(rawgGameId: string) {
+  const existing = await prisma.game.findUnique({
+    where: { gameId: rawgGameId },
+  });
+  if (existing) return existing;
+  return prisma.game.create({ data: { gameId: rawgGameId } });
+}
 
 export const GameController = {
+  getHighlights: async (req: Request, res: Response) => {
+    try {
+      const page = Number(req.query.page) || 1;
+      const pageSize = Number(req.query.pageSize) || 10;
+      const games = await gameService.getTrendingGames(page, pageSize);
+      res.status(200).json(games);
+    } catch (error) {
+      console.error("Erro ao buscar destaques:", error);
+      res.status(500).json({ error: "Erro ao buscar destaques" });
+    }
+  },
   getGames: async (req: Request, res: Response) => {
     try {
       const page = Number(req.query.page) || 1;
@@ -59,12 +82,32 @@ export const GameController = {
       const query = String(req.query.query || "");
       const page = Number(req.query.page) || 1;
       const pageSize = Number(req.query.pageSize) || 10;
-      const games = await gameService.searchGames(query, page, pageSize);
+      const ordering = req.query.ordering
+        ? String(req.query.ordering)
+        : undefined;
+      const genres = req.query.genres ? String(req.query.genres) : undefined;
+      const games = await gameService.searchGames(
+        query,
+        page,
+        pageSize,
+        ordering,
+        genres
+      );
 
       res.status(200).json(games);
     } catch (error) {
       console.error("Erro ao buscar jogos:", error);
       res.status(500).json({ error: "Erro ao buscar jogos" });
+    }
+  },
+
+  getGenres: async (_req: Request, res: Response) => {
+    try {
+      const genres = await gameService.getGenres();
+      res.status(200).json(genres);
+    } catch (error) {
+      console.error("Erro ao buscar gêneros:", error);
+      res.status(500).json({ error: "Erro ao buscar gêneros" });
     }
   },
 
@@ -130,18 +173,55 @@ export const GameController = {
     }
   },
 
-  likeGame: async (req: Request, res: Response) => {
+  getGameDlcs: async (req: Request, res: Response) => {
     try {
-      const userId = req.body.userId;
-      const gameId = req.body.gameId;
+      const gameId = Number(req.params.gameId);
+      const gameDetails = await gameService.getGameDetails(gameId);
+      res.status(200).json(gameDetails.dlcs ?? []);
+    } catch (error) {
+      console.error("Erro ao buscar DLCs do jogo:", error);
+      res.status(500).json({ error: "Erro ao buscar DLCs do jogo" });
+    }
+  },
 
-      if (!userId || !gameId) {
-        return res
-          .status(400)
-          .json({ error: "userId e gameId são obrigatórios" });
+  getGameReviews: async (req: Request, res: Response) => {
+    try {
+      const rawgGameId = String(req.params.gameId);
+      if (!rawgGameId) {
+        return res.status(400).json({ error: "gameId é obrigatório" });
       }
 
-      const result = await gameService.likeGame(userId, gameId);
+      const gameEntity = await getOrCreateGameEntityByRawgId(rawgGameId);
+      const reviews = await reviewService.getReviewsByGameId(gameEntity.id);
+      res.status(200).json(reviews);
+    } catch (error) {
+      console.error("Erro ao buscar reviews do jogo:", error);
+      res.status(500).json({ error: "Erro ao buscar reviews do jogo" });
+    }
+  },
+
+  likeGame: async (req: AuthRequest, res: Response) => {
+    try {
+      const tokenUserId = req.user?.id;
+      const bodyUserId = req.body?.userId as string | undefined;
+      const gameId = req.body?.gameId as string | undefined;
+
+      if (!gameId) {
+        return res.status(400).json({ error: "gameId é obrigatório" });
+      }
+
+      if (tokenUserId && bodyUserId && bodyUserId !== tokenUserId) {
+        return res
+          .status(403)
+          .json({ error: "userId não corresponde ao token" });
+      }
+
+      const resolvedUserId = tokenUserId ?? bodyUserId;
+      if (!resolvedUserId) {
+        return res.status(401).json({ error: "Token não fornecido" });
+      }
+
+      const result = await gameService.likeGame(resolvedUserId, gameId);
       res.status(200).json(result);
     } catch (error) {
       console.error("Erro ao curtir jogo:", error);
@@ -149,9 +229,31 @@ export const GameController = {
     }
   },
 
-  getUserLikedGames: async (req: Request, res: Response) => {
+  getMyLikedGames: async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "Token não fornecido" });
+      }
+
+      const likedGames = await gameService.getUserLikedGames(userId);
+      res.status(200).json(likedGames);
+    } catch (error) {
+      console.error("Erro ao buscar jogos curtidos:", error);
+      res.status(500).json({ error: "Erro ao buscar jogos curtidos" });
+    }
+  },
+
+  getUserLikedGames: async (req: AuthRequest, res: Response) => {
     try {
       const userId = req.params.userId;
+
+      const tokenUserId = req.user?.id;
+      if (tokenUserId && userId && userId !== tokenUserId) {
+        return res
+          .status(403)
+          .json({ error: "userId não corresponde ao token" });
+      }
 
       if (!userId) {
         return res.status(400).json({ error: "userId é obrigatório" });
