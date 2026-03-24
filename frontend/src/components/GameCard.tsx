@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
+import { StarDisplay } from "@/components/StarRating";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -42,24 +43,21 @@ function normalizeGenres(genres?: string[]) {
   return result;
 }
 
-function formatSiteRating(value?: number) {
-  if (typeof value !== "number" || !Number.isFinite(value)) return "-";
-  return value.toFixed(1);
-}
-
 function formatMetacritic(value?: number) {
   if (typeof value !== "number" || !Number.isFinite(value)) return "-";
   return String(Math.round(value));
 }
 
-function getMetacriticVariant(
-  value?: number,
-): "default" | "secondary" | "outline" {
-  if (typeof value !== "number" || !Number.isFinite(value)) return "outline";
-  if (value >= 75) return "default";
-  if (value >= 50) return "secondary";
-  return "outline";
+function metacriticColor(value?: number) {
+  if (typeof value !== "number" || !Number.isFinite(value))
+    return "border border-zinc-600 text-zinc-400";
+  if (value >= 75)
+    return "bg-emerald-900/50 text-emerald-300 border border-emerald-700/60";
+  if (value >= 50)
+    return "bg-amber-900/50 text-amber-300 border border-amber-700/60";
+  return "bg-red-900/50 text-red-300 border border-red-700/60";
 }
+
 
 export function GameCard({
   title,
@@ -96,23 +94,20 @@ export function GameCard({
         <div className="flex items-start justify-between gap-3">
           <CardTitle className="truncate">{title}</CardTitle>
           {showHeaderRatings ? (
-            <div className="flex flex-col items-end gap-1">
-              <Badge
-                variant="secondary"
-                className="tabular-nums"
-                title="Nota do site"
-                aria-label={`Nota do site ${formatSiteRating(siteRating)}`}
-              >
-                GameBoxd {formatSiteRating(siteRating)}
-              </Badge>
-              <Badge
-                variant={getMetacriticVariant(metacritic)}
-                className="tabular-nums"
+            <div className="flex flex-col items-end gap-1.5">
+              {typeof siteRating === "number" ? (
+                <StarDisplay rating={siteRating} size="xs" />
+              ) : null}
+              <div
+                className={cn(
+                  "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium tabular-nums",
+                  metacriticColor(metacritic),
+                )}
                 title="Nota Metacritic"
                 aria-label={`Nota Metacritic ${formatMetacritic(metacritic)}`}
               >
                 MC {formatMetacritic(metacritic)}
-              </Badge>
+              </div>
             </div>
           ) : null}
         </div>
@@ -135,10 +130,12 @@ export function GameCard({
       <CardContent>
         <div className="grid gap-1">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-zinc-400">Nota do GameBoxd</span>
-            <span className="text-sm font-medium tabular-nums">
-              {formatSiteRating(siteRating)}
-            </span>
+            <span className="text-sm text-zinc-400">GameBoxd</span>
+            {typeof siteRating === "number" ? (
+              <StarDisplay rating={siteRating} size="xs" showNumber />
+            ) : (
+              <span className="text-sm text-zinc-500">—</span>
+            )}
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-zinc-400">Metacritic</span>

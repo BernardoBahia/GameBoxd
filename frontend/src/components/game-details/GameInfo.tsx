@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { StarDisplay } from "@/components/StarRating";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -11,11 +12,6 @@ export interface GameInfoProps {
   developers?: string[];
   publishers?: string[];
   className?: string;
-}
-
-function formatSiteRating(value?: number) {
-  if (typeof value !== "number" || !Number.isFinite(value)) return "-";
-  return value.toFixed(1);
 }
 
 function formatMetacritic(value?: number) {
@@ -41,14 +37,15 @@ export function GameInfo({
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <CardTitle className="leading-snug">{title}</CardTitle>
-          <div className="flex flex-col items-end gap-1">
-            <Badge
-              variant="secondary"
-              className="tabular-nums"
-              title="Nota do site"
-            >
-              GameBoxd {formatSiteRating(siteRating)}
-            </Badge>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-col items-end gap-0.5">
+              <span className="text-xs text-zinc-500">GameBoxd</span>
+              {typeof siteRating === "number" ? (
+                <StarDisplay rating={siteRating} size="sm" showNumber />
+              ) : (
+                <span className="text-sm text-zinc-500">—</span>
+              )}
+            </div>
             <Badge
               variant="outline"
               className="tabular-nums"

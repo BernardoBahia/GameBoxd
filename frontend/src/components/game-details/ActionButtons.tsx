@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { StarRating } from "@/components/StarRating";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { gamesService } from "@/services/games.service";
@@ -38,7 +39,7 @@ export function ActionButtons({
   );
 
   const [isRatingOpen, setIsRatingOpen] = useState(false);
-  const [rating5, setRating5] = useState<string>("4");
+  const [rating5, setRating5] = useState<number>(0);
   const [comment, setComment] = useState<string>("");
 
   const [isAddToListOpen, setIsAddToListOpen] = useState(false);
@@ -165,13 +166,12 @@ export function ActionButtons({
       e.preventDefault();
       if (!requireAuth()) return;
 
-      const ratingValue = Number(rating5);
-      if (!Number.isFinite(ratingValue)) {
-        setMessage("Nota inválida.");
+      if (rating5 < 1 || rating5 > 5) {
+        setMessage("Selecione uma nota de 1 a 5 estrelas.");
         return;
       }
 
-      const rating10 = clamp(ratingValue, 0, 5) * 2;
+      const rating10 = clamp(rating5, 1, 5) * 2;
       if (!comment.trim()) {
         setMessage("Comentário é obrigatório.");
         return;
@@ -278,31 +278,12 @@ export function ActionButtons({
         {isRatingOpen ? (
           <form onSubmit={submitRating} className="mt-4 space-y-3">
             <div className="grid gap-2">
-              <label
-                className="text-sm font-medium text-zinc-200"
-                htmlFor="rating"
-              >
-                Nota (0 a 5)
-              </label>
-              <select
-                id="rating"
+              <p className="text-sm font-medium text-zinc-200">Nota</p>
+              <StarRating
                 value={rating5}
-                onChange={(e) => setRating5(e.target.value)}
+                onChange={setRating5}
                 disabled={isBusy}
-                className={cn(
-                  "h-11 w-full rounded-md border border-zinc-800 bg-zinc-900/40 px-3 text-sm text-zinc-50 transition-colors",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-200/20 focus-visible:border-zinc-700"
-                )}
-              >
-                {[0, 1, 2, 3, 4, 5].map((v) => (
-                  <option key={v} value={String(v)}>
-                    {v}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-zinc-500">
-                Você envia em escala 0..10 para o backend.
-              </p>
+              />
             </div>
 
             <div className="grid gap-2">

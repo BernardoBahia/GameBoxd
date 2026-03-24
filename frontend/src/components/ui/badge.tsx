@@ -13,8 +13,8 @@ const base =
 
 const variants: Record<BadgeVariant, string> = {
   default: "bg-zinc-50 text-zinc-950",
-  secondary: "bg-zinc-900 text-zinc-50",
-  outline: "border border-zinc-700 text-zinc-100",
+  secondary: "bg-zinc-700 text-zinc-100",
+  outline: "border border-zinc-600 text-zinc-300",
 };
 
 export function Badge({

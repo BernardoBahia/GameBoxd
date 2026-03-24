@@ -1,4 +1,4 @@
-import { RatingBadge } from "@/components/RatingBadge";
+import { StarDisplay } from "@/components/StarRating";
 import {
   Card,
   CardContent,
@@ -42,7 +42,7 @@ export function ReviewCard({
               <span>{dateLabel}</span>
             </CardDescription>
           </div>
-          <RatingBadge rating={rating} />
+          <StarDisplay rating={rating} showNumber />
         </div>
       </CardHeader>
       <CardContent>

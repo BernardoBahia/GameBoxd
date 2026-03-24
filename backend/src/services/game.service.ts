@@ -8,6 +8,7 @@ import {
   GameDetails,
 } from "../models/game.model";
 import prisma from "../lib/prisma";
+import { getCache, setCache } from "../lib/redis";
 
 const RawgAPIKey = process.env.RAWG_API_KEY;
 
@@ -158,7 +159,16 @@ export class GameService {
     next: string | null;
     previous: string | null;
   }> => {
+    const cacheKey = `rawg:games:${page}:${pageSize}:${filters?.platforms ?? ""}:${filters?.genres ?? ""}:${filters?.dates ?? ""}:${filters?.ordering ?? ""}`;
+
     try {
+      type ListCache = { results: GameSummary[]; count: number; next: string | null; previous: string | null };
+      const cached = await getCache<ListCache>(cacheKey);
+      if (cached) {
+        const enriched = await this.attachGameboxdRatings(cached.results);
+        return { ...cached, results: enriched };
+      }
+
       const params: any = { page, page_size: pageSize };
 
       if (filters?.platforms) params.platforms = filters.platforms;
@@ -182,14 +192,17 @@ export class GameService {
         }),
       );
 
-      const enriched = await this.attachGameboxdRatings(summaries);
-
-      return {
-        results: enriched,
+      const rawgData: ListCache = {
+        results: summaries,
         count: response.data.count,
         next: response.data.next,
         previous: response.data.previous,
       };
+
+      await setCache(cacheKey, rawgData, 300);
+
+      const enriched = await this.attachGameboxdRatings(summaries);
+      return { ...rawgData, results: enriched };
     } catch (error) {
       this.handleError("Erro ao obter jogos", error);
     }
@@ -204,7 +217,16 @@ export class GameService {
     next: string | null;
     previous: string | null;
   }> => {
+    const cacheKey = `rawg:trending:${page}:${pageSize}`;
+
     try {
+      type ListCache = { results: GameSummary[]; count: number; next: string | null; previous: string | null };
+      const cached = await getCache<ListCache>(cacheKey);
+      if (cached) {
+        const enriched = await this.attachGameboxdRatings(cached.results);
+        return { ...cached, results: enriched };
+      }
+
       // Buscar jogos dos últimos 60 dias mais jogados/populares
       const currentDate = new Date();
       const twoMonthsAgo = new Date();
@@ -235,14 +257,17 @@ export class GameService {
         }),
       );
 
-      const enriched = await this.attachGameboxdRatings(summaries);
-
-      return {
-        results: enriched,
+      const rawgData: ListCache = {
+        results: summaries,
         count: response.data.count,
         next: response.data.next,
         previous: response.data.previous,
       };
+
+      await setCache(cacheKey, rawgData, 300);
+
+      const enriched = await this.attachGameboxdRatings(summaries);
+      return { ...rawgData, results: enriched };
     } catch (error) {
       this.handleError("Erro ao obter jogos em alta", error);
     }
@@ -257,7 +282,16 @@ export class GameService {
     next: string | null;
     previous: string | null;
   }> => {
+    const cacheKey = `rawg:recent:${page}:${pageSize}`;
+
     try {
+      type ListCache = { results: GameSummary[]; count: number; next: string | null; previous: string | null };
+      const cached = await getCache<ListCache>(cacheKey);
+      if (cached) {
+        const enriched = await this.attachGameboxdRatings(cached.results);
+        return { ...cached, results: enriched };
+      }
+
       const currentDate = new Date();
       const threeMonthsAgo = new Date();
       threeMonthsAgo.setMonth(currentDate.getMonth() - 3);
@@ -287,14 +321,17 @@ export class GameService {
         }),
       );
 
-      const enriched = await this.attachGameboxdRatings(summaries);
-
-      return {
-        results: enriched,
+      const rawgData: ListCache = {
+        results: summaries,
         count: response.data.count,
         next: response.data.next,
         previous: response.data.previous,
       };
+
+      await setCache(cacheKey, rawgData, 300);
+
+      const enriched = await this.attachGameboxdRatings(summaries);
+      return { ...rawgData, results: enriched };
     } catch (error) {
       this.handleError("Erro ao obter jogos recentes", error);
     }
@@ -312,7 +349,16 @@ export class GameService {
     next: string | null;
     previous: string | null;
   }> => {
+    const cacheKey = `rawg:search:${query}:${page}:${pageSize}:${ordering ?? ""}:${genres ?? ""}`;
+
     try {
+      type SearchCache = { results: GameDetails[]; count: number; next: string | null; previous: string | null };
+      const cached = await getCache<SearchCache>(cacheKey);
+      if (cached) {
+        const enriched = await this.attachGameboxdRatings(cached.results);
+        return { ...cached, results: enriched };
+      }
+
       const response = await rawgApi.get<RawgListResponse>("/games", {
         params: {
           search: query,
@@ -336,21 +382,29 @@ export class GameService {
         }),
       );
 
-      const enriched = await this.attachGameboxdRatings(detailedGames);
-
-      return {
-        results: enriched,
+      const rawgData: SearchCache = {
+        results: detailedGames,
         count: response.data.count,
         next: response.data.next,
         previous: response.data.previous,
       };
+
+      await setCache(cacheKey, rawgData, 180);
+
+      const enriched = await this.attachGameboxdRatings(detailedGames);
+      return { ...rawgData, results: enriched };
     } catch (error) {
       this.handleError("Erro ao buscar jogos", error);
     }
   };
 
   getGenres = async (): Promise<GenreSummary[]> => {
+    const cacheKey = "rawg:genres";
+
     try {
+      const cached = await getCache<GenreSummary[]>(cacheKey);
+      if (cached) return cached;
+
       // RAWG typically caps `page_size` (often 40), so paginate to ensure we
       // return all available genres.
       const pageSize = 40;
@@ -380,9 +434,12 @@ export class GameService {
       const uniqueBySlug = new Map<string, GenreSummary>();
       for (const g of collected) uniqueBySlug.set(g.slug, g);
 
-      return Array.from(uniqueBySlug.values()).sort((a, b) =>
+      const genres = Array.from(uniqueBySlug.values()).sort((a, b) =>
         a.name.localeCompare(b.name, "pt-BR"),
       );
+
+      await setCache(cacheKey, genres, 3600);
+      return genres;
     } catch (error) {
       this.handleError("Erro ao obter gêneros", error);
     }
@@ -393,7 +450,12 @@ export class GameService {
     page = 1,
     pageSize = 10,
   ): Promise<GameDetails[]> => {
+    const cacheKey = `rawg:platform:${platformId}:${page}:${pageSize}`;
+
     try {
+      const cached = await getCache<GameDetails[]>(cacheKey);
+      if (cached) return cached;
+
       const response = await rawgApi.get<RawgListResponse>("/games", {
         params: { platforms: platformId, page, page_size: pageSize },
       });
@@ -411,6 +473,7 @@ export class GameService {
         }),
       );
 
+      await setCache(cacheKey, detailedGames, 600);
       return detailedGames;
     } catch (error) {
       this.handleError("Erro ao buscar jogos por plataforma", error);
@@ -422,7 +485,12 @@ export class GameService {
     page = 1,
     pageSize = 10,
   ): Promise<GameDetails[]> => {
+    const cacheKey = `rawg:genre_games:${genreId}:${page}:${pageSize}`;
+
     try {
+      const cached = await getCache<GameDetails[]>(cacheKey);
+      if (cached) return cached;
+
       const response = await rawgApi.get<RawgListResponse>("/games", {
         params: { genres: genreId, page, page_size: pageSize },
       });
@@ -440,6 +508,7 @@ export class GameService {
         }),
       );
 
+      await setCache(cacheKey, detailedGames, 600);
       return detailedGames;
     } catch (error) {
       this.handleError("Erro ao buscar jogos por gênero", error);
@@ -451,7 +520,12 @@ export class GameService {
     page = 1,
     pageSize = 10,
   ): Promise<GameDetails[]> => {
+    const cacheKey = `rawg:dlc:${dlcId}:${page}:${pageSize}`;
+
     try {
+      const cached = await getCache<GameDetails[]>(cacheKey);
+      if (cached) return cached;
+
       const dlcResp = await rawgApi.get<RawgListResponse>(
         `/games/${dlcId}/additions`,
         {
@@ -472,6 +546,7 @@ export class GameService {
         }),
       );
 
+      await setCache(cacheKey, detailedGames, 600);
       return detailedGames;
     } catch (error) {
       this.handleError("Erro ao buscar jogos por DLC", error);
@@ -479,7 +554,16 @@ export class GameService {
   };
 
   getGameDetails = async (gameId: number): Promise<GameDetails> => {
+    const cacheKey = `rawg:game:${gameId}`;
+
     try {
+      const cached = await getCache<GameDetails>(cacheKey);
+      if (cached) {
+        // Always attach fresh Gameboxd ratings (local DB)
+        const enriched = await this.attachGameboxdRatings([cached]);
+        return enriched[0];
+      }
+
       const detailsResp = await rawgApi.get<RawgGame>(`/games/${gameId}`);
       const dlcsResp = await rawgApi.get<RawgListResponse>(
         `/games/${gameId}/additions`,
@@ -488,6 +572,8 @@ export class GameService {
         ...detailsResp.data,
         additions: dlcsResp.data.results,
       });
+
+      await setCache(cacheKey, details, 900);
 
       const enriched = await this.attachGameboxdRatings([details]);
       return enriched[0];
