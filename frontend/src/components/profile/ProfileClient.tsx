@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLists } from "@/hooks/useLists";
 import { useProfile } from "@/hooks/useProfile";
 import { gamesService } from "@/services/games.service";
+import { profileService } from "@/services/profile.service";
 import { reviewsService } from "@/services/reviews.service";
 import type { GameDetails } from "@/types/games";
 import type { Review } from "@/types/reviews";
@@ -89,7 +90,7 @@ function ListItemSkeleton() {
 }
 
 export function ProfileClient() {
-  const { token, isAuthenticated } = useAuth();
+  const { token, user, isAuthenticated, logout } = useAuth();
   const {
     me,
     stats,
@@ -98,6 +99,9 @@ export function ProfileClient() {
     updateBio,
     isUpdatingBio,
     updateBioError,
+    uploadAvatar,
+    isUploadingAvatar,
+    uploadAvatarError,
   } = useProfile(token);
   const {
     data: lists,
@@ -495,31 +499,23 @@ export function ProfileClient() {
     };
   }, [token, reviews, reviewGameTitles]);
 
-  useEffect(() => {
+  const refetchReviews = useCallback(async () => {
     if (!token) return;
-
-    const authToken = token;
-
-    let cancelled = false;
-
-    async function run() {
-      setIsReviewsLoading(true);
-      setReviewsError(null);
-      try {
-        const result = await reviewsService.getMyReviews(authToken);
-        if (!cancelled) setReviews(Array.isArray(result) ? result : []);
-      } catch (e) {
-        if (!cancelled) setReviewsError(getErrorMessage(e));
-      } finally {
-        if (!cancelled) setIsReviewsLoading(false);
-      }
+    setIsReviewsLoading(true);
+    setReviewsError(null);
+    try {
+      const result = await reviewsService.getMyReviews(token);
+      setReviews(Array.isArray(result) ? result : []);
+    } catch (e) {
+      setReviewsError(getErrorMessage(e));
+    } finally {
+      setIsReviewsLoading(false);
     }
-
-    run();
-    return () => {
-      cancelled = true;
-    };
   }, [token]);
+
+  useEffect(() => {
+    refetchReviews();
+  }, [refetchReviews]);
 
   const derivedStats = useMemo(() => {
     const reviewsCount = stats?.reviewsCount ?? 0;
@@ -613,7 +609,16 @@ export function ProfileClient() {
 
   return (
     <div className="space-y-6">
-      <ProfileHeader name={name} handle={handle} bio={headerBio} />
+      <ProfileHeader
+        name={name}
+        handle={handle}
+        bio={headerBio}
+        avatarUrl={me?.avatarUrl ? profileService.getAvatarUrl(me.avatarUrl) : null}
+        isUploadingAvatar={isUploadingAvatar}
+        uploadAvatarError={uploadAvatarError}
+        onAvatarChange={uploadAvatar}
+        onLogout={logout}
+      />
       <ProfileStats stats={derivedStats} />
 
       <div className="grid gap-10 lg:grid-cols-[1fr_360px]">
@@ -686,11 +691,18 @@ export function ProfileClient() {
                 {reviewCards.map((review) => (
                   <ReviewCard
                     key={review.id}
+                    reviewId={review.id}
                     username={review.username}
+                    avatarUrl={me?.avatarUrl ? profileService.getAvatarUrl(me.avatarUrl) : null}
                     dateLabel={review.dateLabel}
                     rating={review.rating}
                     title={review.title}
                     content={review.content}
+                    isOwner
+                    userId={user?.id}
+                    token={token ?? undefined}
+                    onEdited={refetchReviews}
+                    onDeleted={refetchReviews}
                   />
                 ))}
               </div>

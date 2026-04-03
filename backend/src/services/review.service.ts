@@ -30,22 +30,51 @@ export class ReviewService {
 
   async getReviewsByGameId(gameId: string): Promise<Review[]> {
     try {
-      const reviews = await prisma.review.findMany({
-        where: { gameId },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
+      const rows = await prisma.$queryRaw<
+        Array<{
+          id: string;
+          userId: string;
+          gameId: string;
+          rating: number;
+          comment: string;
+          createdAt: Date;
+          updatedAt: Date | null;
+          userName: string | null;
+          userEmail: string | null;
+          userAvatarUrl: string | null;
+        }>
+      >`
+        SELECT
+          r.id, r."userId", r."gameId", r.rating, r.comment,
+          r."createdAt", r."updatedAt",
+          u.name AS "userName", u.email AS "userEmail", u."avatarUrl" AS "userAvatarUrl"
+        FROM "Review" r
+        LEFT JOIN "User" u ON r."userId" = u.id
+        WHERE r."gameId" = ${gameId}
+        ORDER BY r."createdAt" DESC
+      `;
+
+      console.log(`[getReviewsByGameId] gameId=${gameId} | rows=${rows.length}`);
+      rows.forEach((row, i) => {
+        console.log(`  [row ${i}] userId=${row.userId} | userName=${row.userName} | userEmail=${row.userEmail} | userAvatarUrl=${row.userAvatarUrl}`);
       });
 
-      return reviews.map((review) => ({
-        ...review,
-        updatedAt: review.updatedAt ?? undefined,
+      return rows.map((row) => ({
+        id: row.id,
+        userId: row.userId,
+        gameId: row.gameId,
+        rating: row.rating,
+        comment: row.comment,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt ?? undefined,
+        user: row.userName
+          ? {
+              id: row.userId,
+              name: row.userName,
+              email: row.userEmail ?? "",
+              avatarUrl: row.userAvatarUrl,
+            }
+          : undefined,
       }));
     } catch (error) {
       console.error("Erro ao buscar reviews do jogo:", error);

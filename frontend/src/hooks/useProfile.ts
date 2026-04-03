@@ -16,6 +16,9 @@ export function useProfile(token?: string | null) {
   const [isUpdatingBio, setIsUpdatingBio] = useState(false);
   const [updateBioError, setUpdateBioError] = useState<string | null>(null);
 
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [uploadAvatarError, setUploadAvatarError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!token) {
       setMe(null);
@@ -72,6 +75,25 @@ export function useProfile(token?: string | null) {
     [token],
   );
 
+  const uploadAvatar = useCallback(
+    async (file: File) => {
+      if (!token) throw new Error("Token não fornecido");
+      setIsUploadingAvatar(true);
+      setUploadAvatarError(null);
+      try {
+        const updated = await profileService.uploadAvatar(file, token);
+        setMe(updated);
+        return updated;
+      } catch (e) {
+        const msg = getErrorMessage(e);
+        setUploadAvatarError(msg);
+      } finally {
+        setIsUploadingAvatar(false);
+      }
+    },
+    [token],
+  );
+
   return useMemo(
     () => ({
       me,
@@ -81,7 +103,10 @@ export function useProfile(token?: string | null) {
       updateBio,
       isUpdatingBio,
       updateBioError,
+      uploadAvatar,
+      isUploadingAvatar,
+      uploadAvatarError,
     }),
-    [me, stats, isLoading, error, updateBio, isUpdatingBio, updateBioError],
+    [me, stats, isLoading, error, updateBio, isUpdatingBio, updateBioError, uploadAvatar, isUploadingAvatar, uploadAvatarError],
   );
 }

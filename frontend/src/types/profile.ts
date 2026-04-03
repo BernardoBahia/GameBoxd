@@ -3,6 +3,7 @@ export interface MeResponse {
   email: string;
   name: string;
   bio?: string | null;
+  avatarUrl?: string | null;
 }
 
 export interface UserStatsResponse {

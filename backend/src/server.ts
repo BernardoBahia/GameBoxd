@@ -1,13 +1,16 @@
 import express from "express";
 import cors from "cors";
+import path from "path";
 import userRoutes from "./routes/user.routes";
 import { authRoutes } from "./routes/auth.routes";
 import gameRoutes from "./routes/game.routes";
 import listRoutes from "./routes/list.routes";
 import reviewRoutes from "./routes/review.routes";
 import { authMiddleware, type AuthRequest } from "./middlewares/AuthMiddleware";
+import { uploadAvatar } from "./middlewares/upload.middleware";
 import type { Response } from "express";
 import { UserService } from "./services/user.service";
+import prisma from "./lib/prisma";
 
 const app = express();
 
@@ -18,6 +21,7 @@ app.use(
   }),
 );
 app.use(express.json());
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/api", userRoutes);
 app.use("/api/auth", authRoutes);
 // Aliases for frontend-friendly paths (keep /api/* as primary)
@@ -32,14 +36,45 @@ app.use(gameRoutes);
 app.use(listRoutes);
 app.use(reviewRoutes);
 
-// Alias for "GET /me" expected by frontend prompt
-app.get("/api/me", authMiddleware, (req: AuthRequest, res: Response) => {
-  res.json(req.user);
-});
+async function getMe(req: AuthRequest, res: Response) {
+  const userId = req.user?.id;
+  if (!userId) return res.status(401).json({ error: "Token inválido" });
+  try {
+    const rows = await prisma.$queryRaw<Array<{ avatarUrl: string | null }>>`
+      SELECT "avatarUrl" FROM "User" WHERE id = ${userId} LIMIT 1
+    `;
+    return res.json({ ...req.user, avatarUrl: rows[0]?.avatarUrl ?? null });
+  } catch {
+    return res.json(req.user);
+  }
+}
 
-app.get("/me", authMiddleware, (req: AuthRequest, res: Response) => {
-  res.json(req.user);
-});
+app.get("/api/me", authMiddleware, getMe);
+app.get("/me", authMiddleware, getMe);
+
+async function postAvatar(req: AuthRequest, res: Response) {
+  const userId = req.user?.id;
+  if (!userId) return res.status(401).json({ error: "Token inválido" });
+  if (!req.file) return res.status(400).json({ error: "Arquivo não enviado" });
+
+  const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+  try {
+    await prisma.$executeRaw`UPDATE "User" SET "avatarUrl" = ${avatarUrl} WHERE "id" = ${userId}`;
+    return res.status(200).json({
+      id: req.user!.id,
+      email: req.user!.email,
+      name: req.user!.name,
+      bio: req.user!.bio ?? null,
+      avatarUrl,
+    });
+  } catch (error) {
+    console.error("Erro ao salvar avatar:", error);
+    return res.status(500).json({ error: "Erro ao salvar avatar" });
+  }
+}
+
+app.post("/api/me/avatar", authMiddleware, uploadAvatar.single("avatar"), postAvatar);
+app.post("/me/avatar", authMiddleware, uploadAvatar.single("avatar"), postAvatar);
 
 const userService = new UserService();
 

@@ -13,6 +13,7 @@ model User {
   email      String           @unique
   password   String
   bio        String?
+  avatarUrl  String?
   reviews    Review[]
   lists      List[]
   likedGames UserLikedGame[]

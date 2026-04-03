@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { SectionTitle } from "@/components/SectionTitle";
 import { ActionButtons } from "@/components/game-details/ActionButtons";
@@ -10,6 +10,8 @@ import { GameInfo } from "@/components/game-details/GameInfo";
 import { ReviewCard } from "@/components/game-details/ReviewCard";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useGameDetails } from "@/hooks/useGameDetails";
+import { useAuth } from "@/hooks/useAuth";
+import { profileService } from "@/services/profile.service";
 import type { Review } from "@/types/reviews";
 
 function clamp(n: number, min: number, max: number) {
@@ -49,16 +51,46 @@ function formatMonthYear(dateIso?: string) {
 }
 
 function getUsername(review: Review) {
-  const raw = review.user?.name || review.userId;
-  if (!raw) return "@user";
-  return raw.startsWith("@") ? raw : `@${raw}`;
+  const handle = review.user?.email?.split("@")[0] || review.userId;
+  if (!handle) return "@user";
+  return handle.startsWith("@") ? handle : `@${handle}`;
 }
 
 export function GameDetailsClient({ gameId }: { gameId: string }) {
   const { game, reviews, dlcs, isLoading, error, refetch } =
     useGameDetails(gameId);
+  const { user, token } = useAuth();
 
   const hasDlcs = (dlcs?.length ?? 0) > 0;
+
+  // Busca avatarUrl dos revisores separadamente (backend legado não retorna no JOIN)
+  const [reviewerAvatars, setReviewerAvatars] = useState<Record<string, string | null>>({});
+  const fetchedIds = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!reviews?.length) return;
+    const missing = reviews
+      .map((r) => r.userId)
+      .filter((id) => id && !fetchedIds.current.has(id));
+    if (!missing.length) return;
+
+    missing.forEach((id) => fetchedIds.current.add(id));
+
+    Promise.all(
+      missing.map((id) =>
+        fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/users/${id}`)
+          .then((r) => r.ok ? r.json() : null)
+          .then((data) => ({ id, avatarUrl: data?.avatarUrl ?? null }))
+          .catch(() => ({ id, avatarUrl: null }))
+      )
+    ).then((results) => {
+      setReviewerAvatars((prev) => {
+        const next = { ...prev };
+        results.forEach(({ id, avatarUrl }) => { next[id] = avatarUrl; });
+        return next;
+      });
+    });
+  }, [reviews]);
 
   const siteRating = useMemo(
     () => getSiteRating(game?.gameboxdRating),
@@ -191,7 +223,9 @@ export function GameDetailsClient({ gameId }: { gameId: string }) {
                 {(reviews ?? []).map((review) => (
                   <ReviewCard
                     key={review.id}
+                    reviewId={review.id}
                     username={getUsername(review)}
+                    avatarUrl={profileService.getAvatarUrl(review.user?.avatarUrl ?? reviewerAvatars[review.userId])}
                     dateLabel={formatMonthYear(review.createdAt) || ""}
                     rating={clamp(
                       typeof review.rating === "number" ? review.rating / 2 : 0,
@@ -200,6 +234,11 @@ export function GameDetailsClient({ gameId }: { gameId: string }) {
                     )}
                     title="Review"
                     content={review.comment}
+                    isOwner={user?.id === review.userId}
+                    userId={user?.id}
+                    token={token ?? undefined}
+                    onEdited={refetch}
+                    onDeleted={refetch}
                   />
                 ))}
               </div>

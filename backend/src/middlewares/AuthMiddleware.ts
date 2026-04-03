@@ -27,6 +27,7 @@ export interface AuthRequest extends Request {
     email: string;
     name: string;
     bio?: string | null;
+    avatarUrl?: string | null;
   };
 }
 
@@ -59,6 +60,7 @@ export const authMiddleware = async (
       email: user.email,
       name: user.name,
       bio: user.bio ?? null,
+      avatarUrl: user.avatarUrl ?? null,
     };
 
     next();
@@ -97,6 +99,7 @@ export const optionalAuthMiddleware = async (
       email: user.email,
       name: user.name,
       bio: user.bio ?? null,
+      avatarUrl: user.avatarUrl ?? null,
     };
 
     return next();

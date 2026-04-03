@@ -10,6 +10,7 @@ export class UserService {
       email: prismaUser.email,
       name: prismaUser.name,
       bio: prismaUser.bio ?? null,
+      avatarUrl: prismaUser.avatarUrl ?? null,
       passwordHash: prismaUser.password,
       createdAt: prismaUser.createdAt,
       updatedAt: prismaUser.updatedAt ?? prismaUser.createdAt,
@@ -73,11 +74,32 @@ export class UserService {
 
   async getUserById(id: string): Promise<User | null> {
     try {
-      const user = await prisma.user.findUnique({
-        where: { id },
-      });
+      const rows = await prisma.$queryRaw<
+        Array<{
+          id: string;
+          email: string;
+          name: string;
+          bio: string | null;
+          avatarUrl: string | null;
+          password: string;
+          createdAt: Date;
+          updatedAt: Date | null;
+        }>
+      >`SELECT id, email, name, bio, "avatarUrl", password, "createdAt", "updatedAt" FROM "User" WHERE id = ${id} LIMIT 1`;
 
-      return user ? this.toUserModel(user) : null;
+      const user = rows[0];
+      if (!user) return null;
+
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        bio: user.bio ?? null,
+        avatarUrl: user.avatarUrl ?? null,
+        passwordHash: user.password,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt ?? user.createdAt,
+      };
     } catch (error) {
       console.error("Erro ao buscar usuário por ID:", error);
       throw new Error("Falha ao buscar usuário por ID");
@@ -91,6 +113,7 @@ export class UserService {
       name?: string;
       password?: string;
       bio?: string | null;
+      avatarUrl?: string | null;
     },
   ): Promise<User> {
     try {
