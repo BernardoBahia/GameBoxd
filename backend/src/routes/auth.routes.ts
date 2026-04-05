@@ -11,6 +11,7 @@ const forgotPasswordController = new ForgotPasswordController();
 router.post("/login", loginController.login);
 router.post("/register", registerController.register);
 router.post("/forgot-password", forgotPasswordController.requestReset);
+router.get("/reset-password/validate", forgotPasswordController.validateToken);
 router.post("/reset-password", forgotPasswordController.resetPassword);
 
 export { router as authRoutes };

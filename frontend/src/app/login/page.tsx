@@ -51,15 +51,25 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <AuthInput
-            label="Senha"
-            type="password"
-            placeholder="••••••••"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <div className="space-y-1">
+            <AuthInput
+              label="Senha"
+              type="password"
+              placeholder="••••••••"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <div className="text-right">
+              <Link
+                href="/forgot-password"
+                className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+              >
+                Esqueci minha senha
+              </Link>
+            </div>
+          </div>
 
           <div className="pt-2">
             <AuthButton type="submit" disabled={isLoading}>
