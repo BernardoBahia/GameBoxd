@@ -6,6 +6,8 @@ import { useSearchParams } from "next/navigation";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { AuthInput } from "@/components/auth/AuthInput";
 import { AuthButton } from "@/components/auth/AuthButton";
+import { PasswordChecklist } from "@/components/auth/PasswordChecklist";
+import { validatePassword } from "@/utils/password-rules";
 
 function getBaseUrl() {
   const raw = process.env.NEXT_PUBLIC_API_URL;
@@ -55,8 +57,9 @@ export default function ResetPasswordPage() {
     e.preventDefault();
     setFormError("");
 
-    if (password.length < 6) {
-      setFormError("A senha deve ter no mínimo 6 caracteres.");
+    const { valid, errors } = validatePassword(password);
+    if (!valid) {
+      setFormError(errors.join("; "));
       return;
     }
 
@@ -140,15 +143,18 @@ export default function ResetPasswordPage() {
         description="Escolha uma senha segura para sua conta."
       >
         <form className="space-y-4" onSubmit={onSubmit}>
-          <AuthInput
-            label="Nova senha"
-            type="password"
-            placeholder="••••••••"
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <div className="space-y-2">
+            <AuthInput
+              label="Nova senha"
+              type="password"
+              placeholder="••••••••"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <PasswordChecklist password={password} />
+          </div>
           <AuthInput
             label="Confirmar senha"
             type="password"
@@ -160,7 +166,7 @@ export default function ResetPasswordPage() {
           />
 
           <div className="pt-2">
-            <AuthButton type="submit" disabled={formStatus === "loading"}>
+            <AuthButton type="submit" disabled={formStatus === "loading" || !validatePassword(password).valid || password !== confirm}>
               {formStatus === "loading" ? "Salvando..." : "Redefinir senha"}
             </AuthButton>
           </div>

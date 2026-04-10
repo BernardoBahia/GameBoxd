@@ -1,11 +1,17 @@
 import { UserService } from "../user.service";
 import { AuthService } from "./AuthService";
+import { validatePassword } from "../../utils/password-rules";
 
 const userService = new UserService();
 const authService = new AuthService();
 
 export class RegisterService {
   async register(email: string, name: string, password: string) {
+    const { valid, errors } = validatePassword(password);
+    if (!valid) {
+      throw new Error(errors.join("; "));
+    }
+
     const existingUser = await userService.getUserByEmail(email);
 
     if (existingUser) {

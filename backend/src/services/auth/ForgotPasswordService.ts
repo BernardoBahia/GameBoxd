@@ -2,6 +2,7 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import prisma from "../../lib/prisma";
 import { sendPasswordResetEmail } from "../../lib/email";
+import { validatePassword } from "../../utils/password-rules";
 
 const TOKEN_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
@@ -53,8 +54,9 @@ export class ForgotPasswordService {
       throw new Error("Token e nova senha são obrigatórios");
     }
 
-    if (newPassword.length < 6) {
-      throw new Error("A senha deve ter no mínimo 6 caracteres");
+    const { valid, errors } = validatePassword(newPassword);
+    if (!valid) {
+      throw new Error(errors.join("; "));
     }
 
     const record = await prisma.passwordResetToken.findUnique({

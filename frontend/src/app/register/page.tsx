@@ -8,7 +8,9 @@ import { useRouter } from "next/navigation";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { AuthInput } from "@/components/auth/AuthInput";
+import { PasswordChecklist } from "@/components/auth/PasswordChecklist";
 import { useAuth } from "@/hooks/useAuth";
+import { validatePassword } from "@/utils/password-rules";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -20,10 +22,12 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [success, setSuccess] = useState(false);
 
+  const passwordValidation = useMemo(() => validatePassword(password), [password]);
   const passwordMismatch = useMemo(() => {
     if (!confirmPassword) return false;
     return password !== confirmPassword;
   }, [password, confirmPassword]);
+  const canSubmit = passwordValidation.valid && !passwordMismatch;
 
   useEffect(() => {
     if (isAuthenticated) router.replace("/games");
@@ -67,16 +71,18 @@ export default function RegisterPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <AuthInput
-            label="Senha"
-            type="password"
-            placeholder="••••••••"
-            autoComplete="new-password"
-            hint="Use pelo menos 8 caracteres."
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <div className="space-y-2">
+            <AuthInput
+              label="Senha"
+              type="password"
+              placeholder="••••••••"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <PasswordChecklist password={password} />
+          </div>
           <AuthInput
             label="Confirmar senha"
             type="password"
@@ -89,7 +95,7 @@ export default function RegisterPage() {
           />
 
           <div className="pt-2">
-            <AuthButton type="submit" disabled={isLoading || passwordMismatch}>
+            <AuthButton type="submit" disabled={isLoading || !canSubmit}>
               {isLoading ? "Criando..." : "Criar conta"}
             </AuthButton>
           </div>
