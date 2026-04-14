@@ -119,6 +119,7 @@ async function patchMe(req: AuthRequest, res: Response) {
       email: updated.email,
       name: updated.name,
       bio: updated.bio ?? null,
+      avatarUrl: updated.avatarUrl ?? null,
     });
   } catch (error) {
     console.error("Erro ao atualizar bio:", error);

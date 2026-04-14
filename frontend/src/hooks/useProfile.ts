@@ -62,7 +62,7 @@ export function useProfile(token?: string | null) {
       setUpdateBioError(null);
       try {
         const updated = await profileService.updateBio(bio, token);
-        setMe(updated);
+        setMe((prev) => prev ? { ...prev, ...updated } : updated);
         return updated;
       } catch (e) {
         const msg = getErrorMessage(e);
@@ -82,7 +82,7 @@ export function useProfile(token?: string | null) {
       setUploadAvatarError(null);
       try {
         const updated = await profileService.uploadAvatar(file, token);
-        setMe(updated);
+        setMe((prev) => prev ? { ...prev, ...updated } : updated);
         return updated;
       } catch (e) {
         const msg = getErrorMessage(e);
