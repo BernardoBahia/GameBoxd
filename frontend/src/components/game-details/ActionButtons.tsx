@@ -210,13 +210,13 @@ export function ActionButtons({
     <Card className={cn("border-zinc-800", className)}>
       <CardContent className="p-6">
         <div className="grid gap-2">
-          <Button onClick={handleLike} disabled={isBusy}>
+          <Button onClick={handleLike} disabled={isBusy} aria-label={favoriteLabel} aria-pressed={isLiked}>
             {favoriteLabel}
           </Button>
-          <Button variant="outline" onClick={openAddToList} disabled={isBusy}>
+          <Button variant="outline" onClick={openAddToList} disabled={isBusy} aria-expanded={isAddToListOpen} aria-label="Adicionar jogo a uma lista">
             {isAddToListOpen ? "Fechar listas" : "Adicionar à lista"}
           </Button>
-          <Button variant="secondary" onClick={handleRate} disabled={isBusy}>
+          <Button variant="secondary" onClick={handleRate} disabled={isBusy} aria-expanded={isRatingOpen} aria-label="Avaliar jogo">
             {isRatingOpen ? "Cancelar avaliação" : "Avaliar"}
           </Button>
         </div>

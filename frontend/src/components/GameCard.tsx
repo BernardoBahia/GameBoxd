@@ -81,8 +81,9 @@ export function GameCard({
         className,
       )}
     >
-      {/* media placeholder */}
       <div
+        role="img"
+        aria-label={`Imagem de ${title}`}
         className={cn(
           "aspect-[16/9] w-full bg-zinc-800/50 transition-colors group-hover:bg-zinc-800",
           imageUrl ? "bg-cover bg-center" : "",

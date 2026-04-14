@@ -24,6 +24,8 @@ export function StarRating({
 
   return (
     <div
+      role="radiogroup"
+      aria-label={`Avaliação: ${value} de 5 estrelas`}
       className={cn("flex w-full items-center justify-between", className)}
       onMouseLeave={() => setHovered(0)}
     >
@@ -76,7 +78,7 @@ export function StarDisplay({
   const sizeClass = { xs: "text-xs", sm: "text-sm", md: "text-base" }[size];
 
   return (
-    <div className={cn("flex items-center gap-px", sizeClass, className)}>
+    <div role="img" aria-label={`${clamped.toFixed(1)} de 5 estrelas`} className={cn("flex items-center gap-px", sizeClass, className)}>
       {Array.from({ length: actualFull }).map((_, i) => (
         <span key={`f${i}`} className="text-yellow-400 leading-none">
           ★

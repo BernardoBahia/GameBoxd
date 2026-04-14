@@ -51,9 +51,9 @@ function formatMonthYear(dateIso?: string) {
 }
 
 function getUsername(review: Review) {
-  const handle = review.user?.email?.split("@")[0] || review.userId;
-  if (!handle) return "@user";
-  return handle.startsWith("@") ? handle : `@${handle}`;
+  const name = review.user?.name;
+  if (!name) return "@user";
+  return `@${name}`;
 }
 
 export function GameDetailsClient({ gameId }: { gameId: string }) {

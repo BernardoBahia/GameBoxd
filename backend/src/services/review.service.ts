@@ -54,11 +54,6 @@ export class ReviewService {
         ORDER BY r."createdAt" DESC
       `;
 
-      console.log(`[getReviewsByGameId] gameId=${gameId} | rows=${rows.length}`);
-      rows.forEach((row, i) => {
-        console.log(`  [row ${i}] userId=${row.userId} | userName=${row.userName} | userEmail=${row.userEmail} | userAvatarUrl=${row.userAvatarUrl}`);
-      });
-
       return rows.map((row) => ({
         id: row.id,
         userId: row.userId,

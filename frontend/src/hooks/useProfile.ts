@@ -16,6 +16,9 @@ export function useProfile(token?: string | null) {
   const [isUpdatingBio, setIsUpdatingBio] = useState(false);
   const [updateBioError, setUpdateBioError] = useState<string | null>(null);
 
+  const [isUpdatingName, setIsUpdatingName] = useState(false);
+  const [updateNameError, setUpdateNameError] = useState<string | null>(null);
+
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [uploadAvatarError, setUploadAvatarError] = useState<string | null>(null);
 
@@ -75,6 +78,26 @@ export function useProfile(token?: string | null) {
     [token],
   );
 
+  const updateName = useCallback(
+    async (name: string) => {
+      if (!token) throw new Error("Token não fornecido");
+      setIsUpdatingName(true);
+      setUpdateNameError(null);
+      try {
+        const updated = await profileService.updateName(name, token);
+        setMe((prev) => prev ? { ...prev, ...updated } : updated);
+        return updated;
+      } catch (e) {
+        const msg = getErrorMessage(e);
+        setUpdateNameError(msg);
+        throw e;
+      } finally {
+        setIsUpdatingName(false);
+      }
+    },
+    [token],
+  );
+
   const uploadAvatar = useCallback(
     async (file: File) => {
       if (!token) throw new Error("Token não fornecido");
@@ -103,10 +126,13 @@ export function useProfile(token?: string | null) {
       updateBio,
       isUpdatingBio,
       updateBioError,
+      updateName,
+      isUpdatingName,
+      updateNameError,
       uploadAvatar,
       isUploadingAvatar,
       uploadAvatarError,
     }),
-    [me, stats, isLoading, error, updateBio, isUpdatingBio, updateBioError, uploadAvatar, isUploadingAvatar, uploadAvatarError],
+    [me, stats, isLoading, error, updateBio, isUpdatingBio, updateBioError, updateName, isUpdatingName, updateNameError, uploadAvatar, isUploadingAvatar, uploadAvatarError],
   );
 }

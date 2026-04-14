@@ -17,6 +17,13 @@ export const profileService = {
       token,
     });
   },
+  updateName(name: string, token: string) {
+    return apiFetch<MeResponse>("/me/name", {
+      method: "PATCH",
+      body: JSON.stringify({ name }),
+      token,
+    });
+  },
   getUserStats(userId: string, token?: string) {
     return apiFetch<UserStatsResponse>(`/users/${userId}/stats`, { token });
   },

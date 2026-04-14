@@ -99,6 +99,9 @@ export function ProfileClient() {
     updateBio,
     isUpdatingBio,
     updateBioError,
+    updateName,
+    isUpdatingName,
+    updateNameError,
     uploadAvatar,
     isUploadingAvatar,
     uploadAvatarError,
@@ -531,7 +534,7 @@ export function ProfileClient() {
   }, [stats, lists, displayedFavoriteGames.length]);
 
   const reviewCards = useMemo(() => {
-    const username = emailToHandle(me?.email);
+    const username = me?.name ? `@${me.name}` : emailToHandle(me?.email);
 
     return (visibleReviews ?? []).map((review) => {
       const dateLabel = formatDatePtBr(review.createdAt) || "";
@@ -617,6 +620,9 @@ export function ProfileClient() {
         isUploadingAvatar={isUploadingAvatar}
         uploadAvatarError={uploadAvatarError}
         onAvatarChange={uploadAvatar}
+        onNameSave={updateName}
+        isUpdatingName={isUpdatingName}
+        updateNameError={updateNameError}
         onLogout={logout}
       />
       <ProfileStats stats={derivedStats} />

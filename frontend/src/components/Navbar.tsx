@@ -61,7 +61,7 @@ export function Navbar({
         </nav>
 
         <div className="sm:hidden">
-          <div className="h-9 w-9 rounded-md border border-zinc-800 bg-zinc-900/30" />
+          <button aria-label="Abrir menu de navegação" className="h-9 w-9 rounded-md border border-zinc-800 bg-zinc-900/30" />
         </div>
       </div>
     </header>
