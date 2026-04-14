@@ -21,7 +21,7 @@ router.get(
 router.get("/users/:id", UserController.getUserById);
 router.get("/users/:id/stats", UserController.getUserStats);
 router.get("/users/:id/public", UserController.getUserWithPublicData);
-router.put("/users/:id", UserController.updateUser);
-router.delete("/users/:id", UserController.deleteUser);
+router.put("/users/:id", authMiddleware, UserController.updateUser);
+router.delete("/users/:id", authMiddleware, UserController.deleteUser);
 
 export default router;

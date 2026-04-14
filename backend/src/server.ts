@@ -14,9 +14,20 @@ import prisma from "./lib/prisma";
 
 const app = express();
 
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS ?? "http://localhost:3000")
+  .split(",")
+  .map((o) => o.trim());
+
 app.use(
   cors({
-    origin: true,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, server-to-server)
+      if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Bloqueado pelo CORS"));
+      }
+    },
     credentials: true,
   }),
 );

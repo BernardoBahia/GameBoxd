@@ -27,8 +27,8 @@ router.get(
   GameController.getUserLikedGames,
 );
 router.get("/games/:gameId", GameController.getGameDetails);
-router.post("/games/status", GameController.setGameStatus);
-router.delete("/games/status", GameController.removeGameStatus);
-router.get("/games/status/:userId", GameController.getUserGamesByStatus);
+router.post("/games/status", authMiddleware, GameController.setGameStatus);
+router.delete("/games/status", authMiddleware, GameController.removeGameStatus);
+router.get("/games/status/:userId", authMiddleware, GameController.getUserGamesByStatus);
 
 export default router;

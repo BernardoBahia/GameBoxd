@@ -267,14 +267,15 @@ export const GameController = {
     }
   },
 
-  setGameStatus: async (req: Request, res: Response) => {
+  setGameStatus: async (req: AuthRequest, res: Response) => {
     try {
-      const { userId, gameId, status } = req.body;
+      const userId = req.user?.id;
+      const { gameId, status } = req.body;
 
       if (!userId || !gameId || !status) {
         return res
           .status(400)
-          .json({ error: "userId, gameId e status são obrigatórios" });
+          .json({ error: "gameId e status são obrigatórios" });
       }
 
       if (!["PLAYING", "COMPLETED", "WANT_TO_PLAY"].includes(status)) {
@@ -291,14 +292,15 @@ export const GameController = {
     }
   },
 
-  removeGameStatus: async (req: Request, res: Response) => {
+  removeGameStatus: async (req: AuthRequest, res: Response) => {
     try {
-      const { userId, gameId } = req.body;
+      const userId = req.user?.id;
+      const { gameId } = req.body;
 
       if (!userId || !gameId) {
         return res
           .status(400)
-          .json({ error: "userId e gameId são obrigatórios" });
+          .json({ error: "gameId é obrigatório" });
       }
 
       const result = await gameService.removeGameStatus(userId, gameId);

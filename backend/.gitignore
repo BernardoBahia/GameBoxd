@@ -1,5 +1,16 @@
 node_modules
-# Keep environment variables out of version control
-.env
+dist
 
+# Environment variables
+.env
+.env.*
+
+# Prisma generated
 /src/generated/prisma
+
+# Uploaded files (avatars, etc.)
+uploads/
+
+# Compiled JS files inside src (ts-node-dev uses .ts directly)
+src/**/*.js
+!src/__tests__/**/*.js

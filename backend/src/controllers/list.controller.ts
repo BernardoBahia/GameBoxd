@@ -23,14 +23,15 @@ export const ListController = {
       res.status(500).json({ error: "Erro ao buscar listas" });
     }
   },
-  createList: async (req: Request, res: Response) => {
+  createList: async (req: AuthRequest, res: Response) => {
     try {
-      const { name, userId } = req.body;
+      const userId = req.user?.id;
+      const { name } = req.body;
 
       if (!name || !userId) {
         return res
           .status(400)
-          .json({ error: "Nome e userId são obrigatórios" });
+          .json({ error: "Nome é obrigatório" });
       }
 
       const list = await listService.createList(name, userId);

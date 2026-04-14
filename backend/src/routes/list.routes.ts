@@ -7,7 +7,7 @@ import {
 
 const router = Router();
 
-router.post("/lists", ListController.createList);
+router.post("/lists", authMiddleware, ListController.createList);
 // Frontend-friendly alias: /lists (uses token if provided; or accepts ?userId=)
 router.get("/lists", optionalAuthMiddleware, ListController.getMyLists);
 router.get("/lists/user/:userId", ListController.getListsByUserId);

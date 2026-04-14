@@ -136,14 +136,16 @@ export const ReviewController = {
     }
   },
 
-  updateReview: async (req: Request, res: Response) => {
+  updateReview: async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { userId, rating, comment } = req.body;
+      const userId = req.user?.id;
 
       if (!id || !userId) {
-        return res.status(400).json({ error: "id e userId são obrigatórios" });
+        return res.status(401).json({ error: "Autenticação necessária" });
       }
+
+      const { rating, comment } = req.body;
 
       if (rating !== undefined && (rating < 0 || rating > 10)) {
         return res.status(400).json({
@@ -166,13 +168,13 @@ export const ReviewController = {
     }
   },
 
-  deleteReview: async (req: Request, res: Response) => {
+  deleteReview: async (req: AuthRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { userId } = req.body;
+      const userId = req.user?.id;
 
       if (!id || !userId) {
-        return res.status(400).json({ error: "id e userId são obrigatórios" });
+        return res.status(401).json({ error: "Autenticação necessária" });
       }
 
       await reviewService.deleteReview(id, userId);
