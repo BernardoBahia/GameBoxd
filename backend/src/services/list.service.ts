@@ -1,42 +1,47 @@
 import { List } from "../models/list.model";
 import { GameService } from "./game.service";
 import prisma from "../lib/prisma";
+import { getCache, setCache } from "../lib/redis";
+
 const gameService = new GameService();
 
 export class ListService {
   private async enrichListWithGameDetails(list: any): Promise<List> {
-    if (list.listGames && list.listGames.length > 0) {
-      const enrichedListGames = await Promise.all(
-        list.listGames.map(async (listGame: any) => {
-          try {
-            const gameDetails = await gameService.getGameDetails(
-              parseInt(listGame.game.gameId),
-            );
-            return {
-              ...listGame,
-              game: {
-                ...listGame.game,
-                name: gameDetails.name,
-                background_image: gameDetails.background_image,
-                released: gameDetails.released,
-                metacritic: gameDetails.metacritic,
-                gameboxdRating: gameDetails.gameboxdRating,
-                gameboxdRatingCount: gameDetails.gameboxdRatingCount,
-                genres: gameDetails.genres,
-              },
-            };
-          } catch (error) {
-            console.error(
-              `Erro ao buscar detalhes do jogo ${listGame.game.gameId}:`,
-              error,
-            );
-            return listGame;
+    if (!list.listGames || list.listGames.length === 0) return list;
+
+    const enrichedListGames = await Promise.all(
+      list.listGames.map(async (listGame: any) => {
+        const rawgId = listGame.game?.gameId;
+        if (!rawgId) return listGame;
+
+        const cacheKey = `list:game:${rawgId}`;
+        try {
+          const cached = await getCache<Record<string, unknown>>(cacheKey);
+          if (cached) {
+            return { ...listGame, game: { ...listGame.game, ...cached } };
           }
-        }),
-      );
-      return { ...list, listGames: enrichedListGames };
-    }
-    return list;
+
+          const gameDetails = await gameService.getGameDetails(parseInt(rawgId));
+          const enriched = {
+            name: gameDetails.name,
+            background_image: gameDetails.background_image,
+            released: gameDetails.released,
+            metacritic: gameDetails.metacritic,
+            gameboxdRating: gameDetails.gameboxdRating,
+            gameboxdRatingCount: gameDetails.gameboxdRatingCount,
+            genres: gameDetails.genres,
+          };
+
+          await setCache(cacheKey, enriched, 600);
+          return { ...listGame, game: { ...listGame.game, ...enriched } };
+        } catch (error) {
+          console.error(`Erro ao buscar detalhes do jogo ${rawgId}:`, error);
+          return listGame;
+        }
+      }),
+    );
+
+    return { ...list, listGames: enrichedListGames };
   }
 
   async createList(name: string, userId: string): Promise<List> {

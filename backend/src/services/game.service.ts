@@ -10,6 +10,26 @@ import {
 import prisma from "../lib/prisma";
 import { getCache, setCache } from "../lib/redis";
 
+// Limita concorrência para evitar rate-limit da RAWG
+async function pMap<T, R>(
+  items: T[],
+  fn: (item: T) => Promise<R>,
+  concurrency = 3,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let i = 0;
+
+  async function worker() {
+    while (i < items.length) {
+      const idx = i++;
+      results[idx] = await fn(items[idx]);
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, () => worker()));
+  return results;
+}
+
 const RawgAPIKey = process.env.RAWG_API_KEY;
 
 const rawgApi = axios.create({
@@ -369,8 +389,9 @@ export class GameService {
         },
       });
 
-      const detailedGames = await Promise.all(
-        response.data.results.map(async (game) => {
+      const detailedGames = await pMap(
+        response.data.results,
+        async (game) => {
           const detailsResp = await rawgApi.get<RawgGame>(`/games/${game.id}`);
           const dlcsResp = await rawgApi.get<RawgListResponse>(
             `/games/${game.id}/additions`,
@@ -379,7 +400,8 @@ export class GameService {
           const dlcs = dlcsResp.data.results;
 
           return this.formatGameData({ ...details, additions: dlcs });
-        }),
+        },
+        3,
       );
 
       const rawgData: SearchCache = {

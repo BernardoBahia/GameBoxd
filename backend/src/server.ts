@@ -6,7 +6,7 @@ import { authRoutes } from "./routes/auth.routes";
 import gameRoutes from "./routes/game.routes";
 import listRoutes from "./routes/list.routes";
 import reviewRoutes from "./routes/review.routes";
-import { authMiddleware, type AuthRequest } from "./middlewares/AuthMiddleware";
+import { authMiddleware, invalidateUserCache, type AuthRequest } from "./middlewares/AuthMiddleware";
 import { uploadAvatar } from "./middlewares/upload.middleware";
 import type { Response } from "express";
 import { UserService } from "./services/user.service";
@@ -71,6 +71,7 @@ async function postAvatar(req: AuthRequest, res: Response) {
   const avatarUrl = `/uploads/avatars/${req.file.filename}`;
   try {
     await prisma.$executeRaw`UPDATE "User" SET "avatarUrl" = ${avatarUrl} WHERE "id" = ${userId}`;
+    await invalidateUserCache(userId);
     return res.status(200).json({
       id: req.user!.id,
       email: req.user!.email,
@@ -125,6 +126,7 @@ async function patchMe(req: AuthRequest, res: Response) {
 
   try {
     const updated = await userService.updateUser(userId, { bio });
+    await invalidateUserCache(userId);
     return res.status(200).json({
       id: updated.id,
       email: updated.email,
