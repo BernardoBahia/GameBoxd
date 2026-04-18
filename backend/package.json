@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "tsc",
+    "build": "tsc && npx prisma generate",
     "start": "node dist/server.js",
     "test": "vitest",
     "test:ui": "vitest --ui",
@@ -15,6 +15,9 @@
     "test:watch": "vitest watch",
     "test:create-prisma-environment": "npm link ./prisma/vitest-environment-prisma",
     "test:install-prisma-environment": "npm link vitest-environment-prisma"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "keywords": [],
   "author": "",
